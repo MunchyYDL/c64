@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::C64::Byte;
+use crate::Byte;
 
 enum Colors {
     black = 0x0,

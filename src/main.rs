@@ -1,9 +1,11 @@
-use c64::C64::{Block, Op};
+use crate::C64::Block;
+
+mod C64;
 
 fn main() {
     let block = Block {
         start: 0x1000,
-        instructions: vec![Op::sei, Op::lda, Op::sta],
+        instructions: vec![0x78],
     };
     println!("{}: {:#x?}", stringify!(block), block);
 }

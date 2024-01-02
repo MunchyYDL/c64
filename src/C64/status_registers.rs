@@ -1,25 +1,35 @@
 use std::ops::{BitAnd, BitOr, BitOrAssign};
 
-use crate::C64::Byte;
+use super::Byte;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct StatusRegisters(pub Byte);
+pub struct StatusRegisters(Byte);
 
 impl StatusRegisters {
-    pub fn get(&self) -> Byte {
-        self.0
+    pub fn new(value: u8) -> Self {
+        StatusRegisters(value)
     }
 
-    pub fn get_flag(&self, flag: StatusFlags) -> Byte {
-        self.0 | flag as u8
+    pub fn flags(flags: StatusFlags) -> Self {
+        StatusRegisters(flags.into())
     }
 
-    pub fn set_flag(&mut self, flag: StatusFlags) {
+    pub fn get(&self, flag: StatusFlags) -> bool {
+        (self.0 & flag as u8) > 0
+    }
+
+    pub fn set(&mut self, flag: StatusFlags) {
         self.0 |= flag as u8
     }
 
-    pub fn clear_flag(&mut self, flag: StatusFlags) {
+    pub fn clear(&mut self, flag: StatusFlags) {
         self.0 &= !(flag as u8);
+    }
+}
+
+impl From<StatusRegisters> for u8 {
+    fn from(value: StatusRegisters) -> Self {
+        value.0
     }
 }
 
@@ -80,21 +90,33 @@ pub enum StatusFlags {
     N = (1 << 7),
 }
 
+impl From<StatusFlags> for u8 {
+    fn from(value: StatusFlags) -> Self {
+        value as u8
+    }
+}
+
+impl From<StatusFlags> for StatusRegisters {
+    fn from(value: StatusFlags) -> Self {
+        StatusRegisters::new(value.into())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn public_should_set_flag() {
-        let mut sr = StatusRegisters(0x00);
-        sr.set_flag(StatusFlags::C);
-        assert_eq!(sr.0, 1)
+    fn public_should_clear_flag() {
+        let mut sr : StatusRegisters = StatusFlags::C.into();
+        sr.clear(StatusFlags::C);
+        assert!(!sr.get(StatusFlags::C))
     }
 
     #[test]
-    fn public_should_clear_flag() {
-        let mut sr = StatusRegisters(0x01);
-        sr.clear_flag(StatusFlags::C);
-        assert_eq!(sr.0, 0)
+    fn public_should_set_flag() {
+        let mut sr = StatusRegisters(0x00);
+        sr.set(StatusFlags::C);
+        assert!(sr.get(StatusFlags::C))
     }
 }

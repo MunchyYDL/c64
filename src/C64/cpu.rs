@@ -1,6 +1,6 @@
 use crate::C64::{Byte, Word};
 
-use super::status_registers::StatusRegisters;
+use super::status_registers::{StatusRegisters, StatusFlags};
 
 /*
   The 6510 microprocessor is a relatively simple 8 bit CPU with only a few internal
@@ -46,42 +46,35 @@ pub struct Cpu {
 
 impl Cpu {
     pub fn new() -> Self {
-      Self::default()
+        Self::default()
     }
 
     pub fn clock() {
-      // Should this function handle the logic of fetching an op-code and it's
-      // corresponding fetching of data?
+        // Should this function handle the logic of fetching an op-code and it's
+        // corresponding fetching of data?
 
-      // Maybe a simple start could be to keep a counter of the remaining cycles
-      // to work through for the last op?
+        // Maybe a simple start could be to keep a counter of the remaining cycles
+        // to work through for the last op?
     }
+}
 
-    fn execute(&self, _op: super::Op) {
-      todo!()
+// Ops
+impl Cpu {
+    fn op_sei(&mut self) {
+        self.SR.set(StatusFlags::I);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    // use crate::C64::Op;
-
-    use crate::C64::status_registers::StatusFlags;
-
     use super::*;
 
     #[test]
-    fn op_sei() {
+    fn test_op_sei() {
         let mut cpu = Cpu::new();
+        assert_eq!(cpu.SR, StatusRegisters::new(0));
 
-        // Make sure that the flag is cleared before we do anything
-        assert_eq!(cpu.SR, StatusRegisters(0));
-
-        // cpu.execute(Op::sei);
-
-        // Fake this for now, by setting the StatusFlag::I directly
-        cpu.SR.set_flag(StatusFlags::I);
-
-        assert_eq!(cpu.SR.get_flag(StatusFlags::I), StatusFlags::I as u8);
+        cpu.op_sei();
+        assert!(cpu.SR.get(StatusFlags::I));
     }
 }
