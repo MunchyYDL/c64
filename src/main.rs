@@ -1,5 +1,5 @@
-mod x64;
-use crate::x64::{Block, C64};
+mod c64;
+use crate::c64::{Block, C64};
 
 fn main() {
     let block = Block {
