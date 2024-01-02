@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-use crate::Byte;
-
 enum Colors {
     black = 0x0,
     white = 0x1,
@@ -86,9 +84,9 @@ static GAMMA_CORRECTED_PALETTE: Palette = Palette {
 
 #[derive(Debug)]
 struct Color {
-    r: Byte,
-    g: Byte,
-    b: Byte,
+    r: u8,
+    g: u8,
+    b: u8,
 }
 
 impl Color {

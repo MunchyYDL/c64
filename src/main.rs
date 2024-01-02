@@ -1,11 +1,13 @@
-use crate::C64::Block;
-
-mod C64;
+mod x64;
+use crate::x64::{Block, C64};
 
 fn main() {
     let block = Block {
         start: 0x1000,
         instructions: vec![0x78],
     };
-    println!("{}: {:#x?}", stringify!(block), block);
+    println!("{:#x?}", block);
+
+    let mut c64 = C64::new();
+    c64.reset();
 }
