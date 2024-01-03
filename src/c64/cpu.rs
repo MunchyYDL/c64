@@ -42,6 +42,9 @@ pub struct Cpu {
     /// Status Registers
     pub SR: u8,
 
+    // The amount of cycles still left for the last operation to complete
+    cycles: u8,
+
     // The connected bus
     bus: Option<Box<Bus>>
 }
@@ -172,11 +175,6 @@ mod tests {
 //     sei = 0x78,
 //     lda = 0x33,
 //     sta = 0x54,
-// }
-
-// pub enum AddressingMode {
-//     Implied,
-//     Immediate,
 // }
 
 // impl From<Op> for u8 {

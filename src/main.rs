@@ -1,13 +1,28 @@
 mod c64;
-use crate::c64::{Block, C64};
+use crate::c64::Block;
 
 fn main() {
     let block = Block {
-        start: 0x1000,
-        instructions: vec![0x78],
+        start: 0x0801,
+        instructions: vec![0x78, 0x77, 0x78, 0x20, 0x12, 0x34],
     };
-    println!("{:#x?}", block);
+    show(block);
 
-    let mut c64 = C64::new();
-    c64.reset();
+    let block = Block {
+        start: 0xFCE2,
+        instructions: vec![
+            0xa2, 0xff, 0x78, 0x9a, 0xd8, 0x20, 0x02, 0xfd, 0xd0, 0x03, 0x6c, 0x00, 0x80, 0x8e,
+            0x16, 0xd0, 0x20, 0xa3, 0xfd, 0x20, 0x50, 0xfd, 0x20, 0x15, 0xfd, 0x20, 0x5b, 0xff,
+            0x58, 0x6c, 0x00, 0xa0,
+        ],
+    };
+    show(block);
+}
+
+fn show(block: Block) {
+    let asm = block.disassemble();
+    for line in asm.iter() {
+        println!("{}", line);
+    }
+    println!("\n\n");
 }
