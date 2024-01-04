@@ -4,7 +4,6 @@ pub mod bus;
 pub mod cpu;
 
 use std::collections::HashMap;
-use std::fmt::format;
 
 use self::bus::Bus;
 use self::cpu::Cpu;
@@ -52,46 +51,21 @@ enum AddressingMode {
 }
 
 impl Block {
+
+    #[rustfmt::skip]
     pub fn disassemble(&self) -> Vec<String> {
         let mut result: Vec<String> = vec![];
 
         let mut ins: HashMap<u8, Instruction> = HashMap::new();
-        ins.insert(
-            0xa2,
-            Instruction::new(0xa2, AddressingMode::Immediate, "LDX".into(), 2, 0),
-        );
-        ins.insert(
-            0x78,
-            Instruction::new(0x78, AddressingMode::Implied, "SEI".into(), 1, 0),
-        );
-        ins.insert(
-            0x9a,
-            Instruction::new(0x9a, AddressingMode::Implied, "TXS".into(), 1, 0),
-        );
-        ins.insert(
-            0xd8,
-            Instruction::new(0xd8, AddressingMode::Implied, "CLD".into(), 1, 0),
-        );
-        ins.insert(
-            0x20,
-            Instruction::new(0x20, AddressingMode::Absolute, "JSR".into(), 3, 0),
-        );
-        ins.insert(
-            0xd0,
-            Instruction::new(0xd0, AddressingMode::Relative, "BNE".into(), 2, 0),
-        );
-        ins.insert(
-            0x58,
-            Instruction::new(0x58, AddressingMode::Implied, "CLI".into(), 1, 0),
-        );
-        ins.insert(
-            0x8e,
-            Instruction::new(0x8e, AddressingMode::Absolute, "STX".into(), 3, 0),
-        );
-        ins.insert(
-            0x6c,
-            Instruction::new(0x6c, AddressingMode::Indirect, "JMP".into(), 3, 0),
-        );
+        ins.insert(0xa2, Instruction::new(0xa2, AddressingMode::Immediate, "LDX".into(), 2, 0));
+        ins.insert(0x78, Instruction::new(0x78, AddressingMode::Implied,   "SEI".into(), 1, 0));
+        ins.insert(0x9a, Instruction::new(0x9a, AddressingMode::Implied,   "TXS".into(), 1, 0));
+        ins.insert(0xd8, Instruction::new(0xd8, AddressingMode::Implied,   "CLD".into(), 1, 0));
+        ins.insert(0x20, Instruction::new(0x20, AddressingMode::Absolute,  "JSR".into(), 3, 0));
+        ins.insert(0xd0, Instruction::new(0xd0, AddressingMode::Relative,  "BNE".into(), 2, 0));
+        ins.insert(0x58, Instruction::new(0x58, AddressingMode::Implied,   "CLI".into(), 1, 0));
+        ins.insert(0x8e, Instruction::new(0x8e, AddressingMode::Absolute,  "STX".into(), 3, 0));
+        ins.insert(0x6c, Instruction::new(0x6c, AddressingMode::Indirect,  "JMP".into(), 3, 0));
 
         let mut pos = 0;
 

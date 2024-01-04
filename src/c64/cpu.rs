@@ -46,7 +46,7 @@ pub struct Cpu {
     cycles: u8,
 
     // The connected bus
-    bus: Option<Box<Bus>>
+    bus: Option<Box<Bus>>,
 }
 
 impl Cpu {
@@ -102,7 +102,6 @@ impl Cpu {
             bus.write(address, value);
         }
     }
-
 }
 
 #[derive(Clone, Copy)]
@@ -129,15 +128,6 @@ pub enum StatusFlags {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[test]
-    // fn test_op_sei() {
-    //     let mut cpu = Cpu::new();
-    //     assert_eq!(cpu.SR, StatusFlags::I.into());
-
-    //     cpu.op_sei();
-    //     assert!(cpu.SR.get(StatusFlags::I));
-    // }
 
     #[test]
     fn test_reset() {
@@ -167,18 +157,3 @@ mod tests {
         assert!(!cpu.get_flag(StatusFlags::D));
     }
 }
-
-// #[derive(Debug)]
-// #[repr(u8)]
-// pub enum Op {
-//     cli = 0x58,
-//     sei = 0x78,
-//     lda = 0x33,
-//     sta = 0x54,
-// }
-
-// impl From<Op> for u8 {
-//     fn from(op: Op) -> Self {
-//         op as u8
-//     }
-// }

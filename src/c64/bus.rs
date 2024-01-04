@@ -15,9 +15,7 @@ impl Bus {
         if (0x0000..=0xffff).contains(&address) {
             return self.memory[address];
         }
-
-        // Default
-        0x00
+        0x00 // Default
     }
 
     pub fn write(&mut self, address: usize, value: u8) {
@@ -29,7 +27,6 @@ impl Bus {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
