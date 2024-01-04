@@ -20,8 +20,12 @@ fn main() {
 }
 
 fn show(block: Block) {
-    let asm = block.disassemble();
-    for line in asm.iter() {
+    show_vec(&block.memory());
+    show_vec(&block.disassemble());
+}
+
+fn show_vec(vec: &[String]) {
+    for line in vec.iter() {
         println!("{}", line);
     }
     println!("\n\n");

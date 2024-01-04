@@ -3,6 +3,7 @@
 pub mod bus;
 pub mod cpu;
 
+use std::cmp::min;
 use std::collections::HashMap;
 
 use self::bus::Bus;
@@ -51,6 +52,45 @@ enum AddressingMode {
 }
 
 impl Block {
+    pub fn memory(&self) -> Vec<String> {
+        let mut result: Vec<String> = vec![];
+
+        let mut pos = 0;
+        let length = self.instructions.len();
+        let l = length - 1;
+
+        while pos < length {
+            let addr = self.start + pos as u16;
+
+            let b0 = self.instructions[min(pos, l)];
+            let b1 = self.instructions[min(pos + 1, l)];
+            let b2 = self.instructions[min(pos + 2, l)];
+            let b3 = self.instructions[min(pos + 3, l)];
+
+            let b4 = self.instructions[min(pos + 4, l)];
+            let b5 = self.instructions[min(pos + 5, l)];
+            let b6 = self.instructions[min(pos + 6, l)];
+            let b7 = self.instructions[min(pos + 7, l)];
+
+            let bytes = format!(
+                "{b0:02X} {b1:02X} {b2:02X} {b3:02X}   {b4:02X} {b5:02X} {b6:02X} {b7:02X}"
+            );
+            let decoded = format!(
+                "{}{}{}{}{}{}{}{}",
+                b0 as char,
+                b1 as char,
+                b2 as char,
+                b3 as char,
+                b4 as char,
+                b5 as char,
+                b6 as char,
+                b7 as char,
+            );
+            result.push(format!("{addr:04X}   {bytes}   {decoded}",));
+            pos += 8;
+        }
+        result
+    }
 
     #[rustfmt::skip]
     pub fn disassemble(&self) -> Vec<String> {
