@@ -95,6 +95,51 @@ impl Block {
         ins.insert(0x8e, Instruction::new(0x8e, AddressingMode::Absolute,  "STX".into(), 3, 0));
         ins.insert(0x6c, Instruction::new(0x6c, AddressingMode::Indirect,  "JMP".into(), 3, 0));
 
+        // Memory Instructions
+        ins.insert(0xa9, Instruction::new(0xa9, AddressingMode::Immediate,  "LDA".into(), 2, 2));
+        ins.insert(0xa5, Instruction::new(0xa5, AddressingMode::ZeroPage,   "LDA".into(), 2, 3));
+        ins.insert(0xb5, Instruction::new(0xb5, AddressingMode::ZeroPageX,  "LDA".into(), 2, 4));
+        ins.insert(0xad, Instruction::new(0xad, AddressingMode::Absolute,   "LDA".into(), 3, 4));
+        ins.insert(0xbd, Instruction::new(0xbd, AddressingMode::AbsoluteX,  "LDA".into(), 3, 4));
+        ins.insert(0xb9, Instruction::new(0xb9, AddressingMode::AbsoluteY,  "LDA".into(), 3, 4));
+        ins.insert(0xa1, Instruction::new(0xa1, AddressingMode::IndirectX,  "LDA".into(), 2, 6));
+        ins.insert(0xb1, Instruction::new(0xb1, AddressingMode::IndirectY,  "LDA".into(), 2, 5));
+
+        ins.insert(0x85, Instruction::new(0x85, AddressingMode::ZeroPage,   "STA".into(), 2, 3));
+        ins.insert(0x95, Instruction::new(0x95, AddressingMode::ZeroPageX,  "STA".into(), 2, 4));
+        ins.insert(0x8d, Instruction::new(0x8d, AddressingMode::Absolute,   "STA".into(), 3, 4));
+        ins.insert(0x9d, Instruction::new(0x9d, AddressingMode::AbsoluteX,  "STA".into(), 3, 5));
+        ins.insert(0x99, Instruction::new(0x99, AddressingMode::AbsoluteY,  "STA".into(), 3, 5));
+        ins.insert(0x81, Instruction::new(0x81, AddressingMode::IndirectX,  "STA".into(), 2, 6));
+        ins.insert(0x91, Instruction::new(0x91, AddressingMode::IndirectY,  "STA".into(), 2, 6));
+
+        // Register Instructions
+        ins.insert(0xaa, Instruction::new(0xaa, AddressingMode::Implied,    "TAX".into(), 1, 2));
+        ins.insert(0xa8, Instruction::new(0xa8, AddressingMode::Implied,    "TAY".into(), 1, 2));
+        ins.insert(0x8a, Instruction::new(0x8a, AddressingMode::Implied,    "TXA".into(), 1, 2));
+        ins.insert(0x98, Instruction::new(0x98, AddressingMode::Implied,    "TYA".into(), 1, 2));
+
+        ins.insert(0xca, Instruction::new(0xca, AddressingMode::Implied,    "DEX".into(), 1, 2));
+        ins.insert(0x88, Instruction::new(0x88, AddressingMode::Implied,    "DEY".into(), 1, 2));
+        ins.insert(0xe8, Instruction::new(0xe8, AddressingMode::Implied,    "INX".into(), 1, 2));
+        ins.insert(0xc8, Instruction::new(0xc8, AddressingMode::Implied,    "INY".into(), 1, 2));
+
+
+        // Stack Instructions
+        ins.insert(0x48, Instruction::new(0x48, AddressingMode::Implied,  "PHA".into(), 1, 3));
+        ins.insert(0x08, Instruction::new(0x08, AddressingMode::Implied,  "PHP".into(), 1, 3));
+        ins.insert(0x9a, Instruction::new(0x9a, AddressingMode::Implied,  "TXS".into(), 1, 2));
+
+        ins.insert(0x68, Instruction::new(0x68, AddressingMode::Implied,  "PLA".into(), 1, 4));
+        ins.insert(0xba, Instruction::new(0xba, AddressingMode::Implied,  "TSX".into(), 1, 2));
+
+        ins.insert(0x28, Instruction::new(0x28, AddressingMode::Implied,  "PLP".into(), 1, 4));
+
+        // Other Instructions
+        ins.insert(0x00, Instruction::new(0x00, AddressingMode::Implied,  "BRK".into(), 1, 7));
+        ins.insert(0xea, Instruction::new(0xea, AddressingMode::Implied,  "NOP".into(), 1, 2));
+
+
         let mut pos = 0;
 
         while pos < self.instructions.len() {
