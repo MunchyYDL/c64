@@ -3,6 +3,7 @@
 pub mod bus;
 pub mod cpu;
 
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
 use self::bus::Bus;
@@ -14,7 +15,23 @@ pub struct Block {
     pub instructions: Vec<u8>,
 }
 
-struct Instruction {
+#[derive(Clone, Copy)]
+pub(crate) enum AddressingMode {
+    Absolute,
+    AbsoluteX,
+    AbsoluteY,
+    Immediate,
+    Implied,
+    Indirect,
+    IndirectX,
+    IndirectY,
+    Relative,
+    ZeroPage,
+    ZeroPageX,
+    ZeroPageY,
+}
+
+pub(crate) struct Instruction {
     code: u8,
     mode: AddressingMode,
     name: String,
@@ -32,23 +49,97 @@ impl Instruction {
             cycles,
         }
     }
+
+    pub fn unknown(code: u8) -> Self {
+        Instruction::new(code, AddressingMode::Implied, String::from("???"), 1, 0)
+    }
 }
 
-#[derive(Clone, Copy)]
-enum AddressingMode {
-    Absolute,
-    AbsoluteX,
-    AbsoluteY,
-    Immediate,
-    Implied,
-    Indirect,
-    IndirectX,
-    IndirectY,
-    Relative,
-    ZeroPage,
-    ZeroPageX,
-    ZeroPageY,
+pub fn decode(opcode: &u8) -> &'static Instruction {
+    INSTRUCTIONS
+        .get(opcode)
+        .unwrap_or_else(|| &UNKNOWN_INSTRUCTION)
 }
+
+static UNKNOWN_INSTRUCTION: Lazy<Instruction> =
+    Lazy::new(|| Instruction::new(0xff, AddressingMode::Implied, "???".into(), 1, 0));
+
+#[rustfmt::skip]
+static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
+    HashMap::from([
+        (0xa2, Instruction::new(0xa2, AddressingMode::Immediate, "LDX".into(), 2, 0)),
+        (0x78, Instruction::new(0x78, AddressingMode::Implied,   "SEI".into(), 1, 0)),
+        (0x9a, Instruction::new(0x9a, AddressingMode::Implied,   "TXS".into(), 1, 0)),
+        (0xd8, Instruction::new(0xd8, AddressingMode::Implied,   "CLD".into(), 1, 0)),
+        (0x20, Instruction::new(0x20, AddressingMode::Absolute,  "JSR".into(), 3, 0)),
+        (0xd0, Instruction::new(0xd0, AddressingMode::Relative,  "BNE".into(), 2, 0)),
+        (0x58, Instruction::new(0x58, AddressingMode::Implied,   "CLI".into(), 1, 0)),
+        (0x8e, Instruction::new(0x8e, AddressingMode::Absolute,  "STX".into(), 3, 0)),
+        (0x6c, Instruction::new(0x6c, AddressingMode::Indirect,  "JMP".into(), 3, 0)),
+
+        // Bitwise Instructions
+
+        // Branch Instructions
+
+        // Compare Instructions
+
+        // Flag Instructions
+
+        // Jump Instructions
+
+        // Math Instructions
+
+
+
+        // Memory Instructions
+        (0xa9, Instruction::new(0xa9, AddressingMode::Immediate,  "LDA".into(), 2, 2)),
+        (0xa5, Instruction::new(0xa5, AddressingMode::ZeroPage,   "LDA".into(), 2, 3)),
+        (0xb5, Instruction::new(0xb5, AddressingMode::ZeroPageX,  "LDA".into(), 2, 4)),
+        (0xad, Instruction::new(0xad, AddressingMode::Absolute,   "LDA".into(), 3, 4)),
+        (0xbd, Instruction::new(0xbd, AddressingMode::AbsoluteX,  "LDA".into(), 3, 4)),
+        (0xb9, Instruction::new(0xb9, AddressingMode::AbsoluteY,  "LDA".into(), 3, 4)),
+        (0xa1, Instruction::new(0xa1, AddressingMode::IndirectX,  "LDA".into(), 2, 6)),
+        (0xb1, Instruction::new(0xb1, AddressingMode::IndirectY,  "LDA".into(), 2, 5)),
+
+        (0x85, Instruction::new(0x85, AddressingMode::ZeroPage,   "STA".into(), 2, 3)),
+        (0x95, Instruction::new(0x95, AddressingMode::ZeroPageX,  "STA".into(), 2, 4)),
+        (0x8d, Instruction::new(0x8d, AddressingMode::Absolute,   "STA".into(), 3, 4)),
+        (0x9d, Instruction::new(0x9d, AddressingMode::AbsoluteX,  "STA".into(), 3, 5)),
+        (0x99, Instruction::new(0x99, AddressingMode::AbsoluteY,  "STA".into(), 3, 5)),
+        (0x81, Instruction::new(0x81, AddressingMode::IndirectX,  "STA".into(), 2, 6)),
+        (0x91, Instruction::new(0x91, AddressingMode::IndirectY,  "STA".into(), 2, 6)),
+
+        // more...
+        
+        // Register Instructions
+        (0xaa, Instruction::new(0xaa, AddressingMode::Implied,    "TAX".into(), 1, 2)),
+        (0xa8, Instruction::new(0xa8, AddressingMode::Implied,    "TAY".into(), 1, 2)),
+        (0x8a, Instruction::new(0x8a, AddressingMode::Implied,    "TXA".into(), 1, 2)),
+        (0x98, Instruction::new(0x98, AddressingMode::Implied,    "TYA".into(), 1, 2)),
+
+        (0xca, Instruction::new(0xca, AddressingMode::Implied,    "DEX".into(), 1, 2)),
+        (0x88, Instruction::new(0x88, AddressingMode::Implied,    "DEY".into(), 1, 2)),
+        (0xe8, Instruction::new(0xe8, AddressingMode::Implied,    "INX".into(), 1, 2)),
+        (0xc8, Instruction::new(0xc8, AddressingMode::Implied,    "INY".into(), 1, 2)),
+
+        // Stack Instructions
+        (0x48, Instruction::new(0x48, AddressingMode::Implied,  "PHA".into(), 1, 3)),
+        (0x08, Instruction::new(0x08, AddressingMode::Implied,  "PHP".into(), 1, 3)),
+        (0x9a, Instruction::new(0x9a, AddressingMode::Implied,  "TXS".into(), 1, 2)),
+        
+        (0x68, Instruction::new(0x68, AddressingMode::Implied,  "PLA".into(), 1, 4)),
+        (0xba, Instruction::new(0xba, AddressingMode::Implied,  "TSX".into(), 1, 2)),
+        
+        (0x28, Instruction::new(0x28, AddressingMode::Implied,  "PLP".into(), 1, 4)),
+        
+        // Other Instructions
+        (0x00, Instruction::new(0x00, AddressingMode::Implied,  "BRK".into(), 1, 7)),
+        (0xea, Instruction::new(0xea, AddressingMode::Implied,  "NOP".into(), 1, 2)),      
+
+        // FIXME: Unknown Instructions
+        (0x77, Instruction::unknown(0x77)),  
+    ])
+});
 
 impl Block {
     pub fn memory(&self) -> Vec<String> {
@@ -80,89 +171,27 @@ impl Block {
         result
     }
 
-    #[rustfmt::skip]
     pub fn disassemble(&self) -> Vec<String> {
         let mut result: Vec<String> = vec![];
-
-        let mut ins: HashMap<u8, Instruction> = HashMap::new();
-        ins.insert(0xa2, Instruction::new(0xa2, AddressingMode::Immediate, "LDX".into(), 2, 0));
-        ins.insert(0x78, Instruction::new(0x78, AddressingMode::Implied,   "SEI".into(), 1, 0));
-        ins.insert(0x9a, Instruction::new(0x9a, AddressingMode::Implied,   "TXS".into(), 1, 0));
-        ins.insert(0xd8, Instruction::new(0xd8, AddressingMode::Implied,   "CLD".into(), 1, 0));
-        ins.insert(0x20, Instruction::new(0x20, AddressingMode::Absolute,  "JSR".into(), 3, 0));
-        ins.insert(0xd0, Instruction::new(0xd0, AddressingMode::Relative,  "BNE".into(), 2, 0));
-        ins.insert(0x58, Instruction::new(0x58, AddressingMode::Implied,   "CLI".into(), 1, 0));
-        ins.insert(0x8e, Instruction::new(0x8e, AddressingMode::Absolute,  "STX".into(), 3, 0));
-        ins.insert(0x6c, Instruction::new(0x6c, AddressingMode::Indirect,  "JMP".into(), 3, 0));
-
-        // Memory Instructions
-        ins.insert(0xa9, Instruction::new(0xa9, AddressingMode::Immediate,  "LDA".into(), 2, 2));
-        ins.insert(0xa5, Instruction::new(0xa5, AddressingMode::ZeroPage,   "LDA".into(), 2, 3));
-        ins.insert(0xb5, Instruction::new(0xb5, AddressingMode::ZeroPageX,  "LDA".into(), 2, 4));
-        ins.insert(0xad, Instruction::new(0xad, AddressingMode::Absolute,   "LDA".into(), 3, 4));
-        ins.insert(0xbd, Instruction::new(0xbd, AddressingMode::AbsoluteX,  "LDA".into(), 3, 4));
-        ins.insert(0xb9, Instruction::new(0xb9, AddressingMode::AbsoluteY,  "LDA".into(), 3, 4));
-        ins.insert(0xa1, Instruction::new(0xa1, AddressingMode::IndirectX,  "LDA".into(), 2, 6));
-        ins.insert(0xb1, Instruction::new(0xb1, AddressingMode::IndirectY,  "LDA".into(), 2, 5));
-
-        ins.insert(0x85, Instruction::new(0x85, AddressingMode::ZeroPage,   "STA".into(), 2, 3));
-        ins.insert(0x95, Instruction::new(0x95, AddressingMode::ZeroPageX,  "STA".into(), 2, 4));
-        ins.insert(0x8d, Instruction::new(0x8d, AddressingMode::Absolute,   "STA".into(), 3, 4));
-        ins.insert(0x9d, Instruction::new(0x9d, AddressingMode::AbsoluteX,  "STA".into(), 3, 5));
-        ins.insert(0x99, Instruction::new(0x99, AddressingMode::AbsoluteY,  "STA".into(), 3, 5));
-        ins.insert(0x81, Instruction::new(0x81, AddressingMode::IndirectX,  "STA".into(), 2, 6));
-        ins.insert(0x91, Instruction::new(0x91, AddressingMode::IndirectY,  "STA".into(), 2, 6));
-
-        // Register Instructions
-        ins.insert(0xaa, Instruction::new(0xaa, AddressingMode::Implied,    "TAX".into(), 1, 2));
-        ins.insert(0xa8, Instruction::new(0xa8, AddressingMode::Implied,    "TAY".into(), 1, 2));
-        ins.insert(0x8a, Instruction::new(0x8a, AddressingMode::Implied,    "TXA".into(), 1, 2));
-        ins.insert(0x98, Instruction::new(0x98, AddressingMode::Implied,    "TYA".into(), 1, 2));
-
-        ins.insert(0xca, Instruction::new(0xca, AddressingMode::Implied,    "DEX".into(), 1, 2));
-        ins.insert(0x88, Instruction::new(0x88, AddressingMode::Implied,    "DEY".into(), 1, 2));
-        ins.insert(0xe8, Instruction::new(0xe8, AddressingMode::Implied,    "INX".into(), 1, 2));
-        ins.insert(0xc8, Instruction::new(0xc8, AddressingMode::Implied,    "INY".into(), 1, 2));
-
-
-        // Stack Instructions
-        ins.insert(0x48, Instruction::new(0x48, AddressingMode::Implied,  "PHA".into(), 1, 3));
-        ins.insert(0x08, Instruction::new(0x08, AddressingMode::Implied,  "PHP".into(), 1, 3));
-        ins.insert(0x9a, Instruction::new(0x9a, AddressingMode::Implied,  "TXS".into(), 1, 2));
-
-        ins.insert(0x68, Instruction::new(0x68, AddressingMode::Implied,  "PLA".into(), 1, 4));
-        ins.insert(0xba, Instruction::new(0xba, AddressingMode::Implied,  "TSX".into(), 1, 2));
-
-        ins.insert(0x28, Instruction::new(0x28, AddressingMode::Implied,  "PLP".into(), 1, 4));
-
-        // Other Instructions
-        ins.insert(0x00, Instruction::new(0x00, AddressingMode::Implied,  "BRK".into(), 1, 7));
-        ins.insert(0xea, Instruction::new(0xea, AddressingMode::Implied,  "NOP".into(), 1, 2));
-
 
         let mut pos = 0;
 
         while pos < self.instructions.len() {
             let inst = self.instructions[pos];
-
-            let mut code = inst;
-            let mut name = String::from("???");
-            let mut length = 1;
-            let mut mode = AddressingMode::Implied;
-
-            if let Some(op) = ins.get(&inst) {
-                code = op.code;
-                name = op.name.clone();
-                length = op.length;
-                mode = op.mode;
-            }
+            let Instruction {
+                code,
+                name,
+                length,
+                mode,
+                cycles,
+            } = decode(&inst);
 
             let addr = self.start + pos as u16;
 
             let (bytes, decoded) = match length {
                 1 => {
                     let bytes = format!("{code:02X}      ");
-                    let decoded = name;
+                    let decoded = name.to_string();
                     (bytes, decoded)
                 }
                 2 => {
@@ -188,7 +217,7 @@ impl Block {
             };
 
             result.push(format!("{addr:04X}   {bytes}   {decoded}",));
-            pos += length as usize;
+            pos += *length as usize;
         }
         result
     }
