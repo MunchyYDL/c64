@@ -5,17 +5,18 @@ pub mod cpu;
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::fmt::Display;
 
 use self::bus::Bus;
 use self::cpu::Cpu;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Block {
     pub start: u16,
     pub instructions: Vec<u8>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) enum AddressingMode {
     Absolute,
     AbsoluteX,
@@ -66,16 +67,17 @@ static UNKNOWN_INSTRUCTION: Lazy<Instruction> =
 
 #[rustfmt::skip]
 static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
+    use AddressingMode::*;
     HashMap::from([
-        (0xa2, Instruction::new(0xa2, AddressingMode::Immediate, "LDX".into(), 2, 0)),
-        (0x78, Instruction::new(0x78, AddressingMode::Implied,   "SEI".into(), 1, 0)),
-        (0x9a, Instruction::new(0x9a, AddressingMode::Implied,   "TXS".into(), 1, 0)),
-        (0xd8, Instruction::new(0xd8, AddressingMode::Implied,   "CLD".into(), 1, 0)),
-        (0x20, Instruction::new(0x20, AddressingMode::Absolute,  "JSR".into(), 3, 0)),
-        (0xd0, Instruction::new(0xd0, AddressingMode::Relative,  "BNE".into(), 2, 0)),
-        (0x58, Instruction::new(0x58, AddressingMode::Implied,   "CLI".into(), 1, 0)),
-        (0x8e, Instruction::new(0x8e, AddressingMode::Absolute,  "STX".into(), 3, 0)),
-        (0x6c, Instruction::new(0x6c, AddressingMode::Indirect,  "JMP".into(), 3, 0)),
+        (0xa2, Instruction::new(0xa2, Immediate, "LDX".into(), 2, 0)),
+        (0x78, Instruction::new(0x78, Implied,   "SEI".into(), 1, 0)),
+        (0x9a, Instruction::new(0x9a, Implied,   "TXS".into(), 1, 0)),
+        (0xd8, Instruction::new(0xd8, Implied,   "CLD".into(), 1, 0)),
+        (0x20, Instruction::new(0x20, Absolute,  "JSR".into(), 3, 0)),
+        (0xd0, Instruction::new(0xd0, Relative,  "BNE".into(), 2, 0)),
+        (0x58, Instruction::new(0x58, Implied,   "CLI".into(), 1, 0)),
+        (0x8e, Instruction::new(0x8e, Absolute,  "STX".into(), 3, 0)),
+        (0x6c, Instruction::new(0x6c, Indirect,  "JMP".into(), 3, 0)),
 
         // Bitwise Instructions
 
@@ -92,54 +94,73 @@ static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
 
 
         // Memory Instructions
-        (0xa9, Instruction::new(0xa9, AddressingMode::Immediate,  "LDA".into(), 2, 2)),
-        (0xa5, Instruction::new(0xa5, AddressingMode::ZeroPage,   "LDA".into(), 2, 3)),
-        (0xb5, Instruction::new(0xb5, AddressingMode::ZeroPageX,  "LDA".into(), 2, 4)),
-        (0xad, Instruction::new(0xad, AddressingMode::Absolute,   "LDA".into(), 3, 4)),
-        (0xbd, Instruction::new(0xbd, AddressingMode::AbsoluteX,  "LDA".into(), 3, 4)),
-        (0xb9, Instruction::new(0xb9, AddressingMode::AbsoluteY,  "LDA".into(), 3, 4)),
-        (0xa1, Instruction::new(0xa1, AddressingMode::IndirectX,  "LDA".into(), 2, 6)),
-        (0xb1, Instruction::new(0xb1, AddressingMode::IndirectY,  "LDA".into(), 2, 5)),
+        (0xa9, Instruction::new(0xa9, Immediate, "LDA".into(), 2, 2)),
+        (0xa5, Instruction::new(0xa5, ZeroPage,  "LDA".into(), 2, 3)),
+        (0xb5, Instruction::new(0xb5, ZeroPageX, "LDA".into(), 2, 4)),
+        (0xad, Instruction::new(0xad, Absolute,  "LDA".into(), 3, 4)),
+        (0xbd, Instruction::new(0xbd, AbsoluteX, "LDA".into(), 3, 4)),
+        (0xb9, Instruction::new(0xb9, AbsoluteY, "LDA".into(), 3, 4)),
+        (0xa1, Instruction::new(0xa1, IndirectX, "LDA".into(), 2, 6)),
+        (0xb1, Instruction::new(0xb1, IndirectY, "LDA".into(), 2, 5)),
 
-        (0x85, Instruction::new(0x85, AddressingMode::ZeroPage,   "STA".into(), 2, 3)),
-        (0x95, Instruction::new(0x95, AddressingMode::ZeroPageX,  "STA".into(), 2, 4)),
-        (0x8d, Instruction::new(0x8d, AddressingMode::Absolute,   "STA".into(), 3, 4)),
-        (0x9d, Instruction::new(0x9d, AddressingMode::AbsoluteX,  "STA".into(), 3, 5)),
-        (0x99, Instruction::new(0x99, AddressingMode::AbsoluteY,  "STA".into(), 3, 5)),
-        (0x81, Instruction::new(0x81, AddressingMode::IndirectX,  "STA".into(), 2, 6)),
-        (0x91, Instruction::new(0x91, AddressingMode::IndirectY,  "STA".into(), 2, 6)),
+        (0x85, Instruction::new(0x85, ZeroPage,  "STA".into(), 2, 3)),
+        (0x95, Instruction::new(0x95, ZeroPageX, "STA".into(), 2, 4)),
+        (0x8d, Instruction::new(0x8d, Absolute,  "STA".into(), 3, 4)),
+        (0x9d, Instruction::new(0x9d, AbsoluteX, "STA".into(), 3, 5)),
+        (0x99, Instruction::new(0x99, AbsoluteY, "STA".into(), 3, 5)),
+        (0x81, Instruction::new(0x81, IndirectX, "STA".into(), 2, 6)),
+        (0x91, Instruction::new(0x91, IndirectY, "STA".into(), 2, 6)),
 
         // more...
         
         // Register Instructions
-        (0xaa, Instruction::new(0xaa, AddressingMode::Implied,    "TAX".into(), 1, 2)),
-        (0xa8, Instruction::new(0xa8, AddressingMode::Implied,    "TAY".into(), 1, 2)),
-        (0x8a, Instruction::new(0x8a, AddressingMode::Implied,    "TXA".into(), 1, 2)),
-        (0x98, Instruction::new(0x98, AddressingMode::Implied,    "TYA".into(), 1, 2)),
+        (0xaa, Instruction::new(0xaa, Implied,    "TAX".into(), 1, 2)),
+        (0xa8, Instruction::new(0xa8, Implied,    "TAY".into(), 1, 2)),
+        (0x8a, Instruction::new(0x8a, Implied,    "TXA".into(), 1, 2)),
+        (0x98, Instruction::new(0x98, Implied,    "TYA".into(), 1, 2)),
 
-        (0xca, Instruction::new(0xca, AddressingMode::Implied,    "DEX".into(), 1, 2)),
-        (0x88, Instruction::new(0x88, AddressingMode::Implied,    "DEY".into(), 1, 2)),
-        (0xe8, Instruction::new(0xe8, AddressingMode::Implied,    "INX".into(), 1, 2)),
-        (0xc8, Instruction::new(0xc8, AddressingMode::Implied,    "INY".into(), 1, 2)),
+        (0xca, Instruction::new(0xca, Implied,    "DEX".into(), 1, 2)),
+        (0x88, Instruction::new(0x88, Implied,    "DEY".into(), 1, 2)),
+        (0xe8, Instruction::new(0xe8, Implied,    "INX".into(), 1, 2)),
+        (0xc8, Instruction::new(0xc8, Implied,    "INY".into(), 1, 2)),
 
         // Stack Instructions
-        (0x48, Instruction::new(0x48, AddressingMode::Implied,  "PHA".into(), 1, 3)),
-        (0x08, Instruction::new(0x08, AddressingMode::Implied,  "PHP".into(), 1, 3)),
-        (0x9a, Instruction::new(0x9a, AddressingMode::Implied,  "TXS".into(), 1, 2)),
+        (0x48, Instruction::new(0x48, Implied,  "PHA".into(), 1, 3)),
+        (0x08, Instruction::new(0x08, Implied,  "PHP".into(), 1, 3)),
+        (0x9a, Instruction::new(0x9a, Implied,  "TXS".into(), 1, 2)),
         
-        (0x68, Instruction::new(0x68, AddressingMode::Implied,  "PLA".into(), 1, 4)),
-        (0xba, Instruction::new(0xba, AddressingMode::Implied,  "TSX".into(), 1, 2)),
+        (0x68, Instruction::new(0x68, Implied,  "PLA".into(), 1, 4)),
+        (0xba, Instruction::new(0xba, Implied,  "TSX".into(), 1, 2)),
         
-        (0x28, Instruction::new(0x28, AddressingMode::Implied,  "PLP".into(), 1, 4)),
+        (0x28, Instruction::new(0x28, Implied,  "PLP".into(), 1, 4)),
         
         // Other Instructions
-        (0x00, Instruction::new(0x00, AddressingMode::Implied,  "BRK".into(), 1, 7)),
-        (0xea, Instruction::new(0xea, AddressingMode::Implied,  "NOP".into(), 1, 2)),      
+        (0x00, Instruction::new(0x00, Implied,  "BRK".into(), 1, 7)),
+        (0xea, Instruction::new(0xea, Implied,  "NOP".into(), 1, 2)),      
 
         // FIXME: Unknown Instructions
         (0x77, Instruction::unknown(0x77)),  
     ])
 });
+
+static MNEMONICS: Lazy<HashMap<(&str, AddressingMode), u8>> = Lazy::new(|| {
+    use AddressingMode::*;
+    HashMap::from([
+        (("LDX", Immediate), 0xa2),
+        (("SEI", Implied), 0x78),
+        (("TXS", Implied), 0x9a),
+        (("CLD", Implied), 0xd8),
+        (("JSR", Absolute), 0x20),
+        (("BNE", Absolute), 0xd0),
+        (("CLI", Implied), 0x58),
+        (("STX", Absolute), 0x8e),
+        (("JMP", Indirect), 0x6c),
+        // (("LDA", Absolute), 0x00), (("LDA", Immediate), 0x00)
+    ])
+});
+
+// #[rustfmt::skip]
+// static LOOKUP: Lazy<HashMap<>
 
 impl Block {
     pub fn memory(&self) -> Vec<String> {
@@ -220,6 +241,147 @@ impl Block {
             pos += *length as usize;
         }
         result
+    }
+
+    // A really simple assembler function, to be able to
+    // enter some code easily into the emulator, to test
+    // it out a bit simpler during development.
+    fn assemble(source: &str) -> Self {
+        let mut found_start = false;
+        let mut start: u16 = 0x0000;
+        let mut instructions: Vec<u8> = vec![];
+
+        // For now, require the start-address to be the first "instruction".
+        // E.g. *= $0810
+        for line in source.lines() {
+            let instruction = {
+                let l: Vec<&str> = line.split(';').collect();
+                l[0].trim()
+            };
+
+            // Find the start address first
+            if !found_start {
+                let op = instruction.trim_start_matches("*= $");
+                if let Ok(val) = u16::from_str_radix(op, 16) {
+                    start = val;
+                    found_start = true;
+                }
+            } else {
+                // We're not interested in empty lines or comments
+                if instruction.is_empty() {
+                    continue;
+                }
+
+                let (mnemonic, params) = {
+                    let l: Vec<&str> = instruction.split(' ').collect();
+                    if l.len() == 1 {
+                        (l[0], "")
+                    } else {
+                        (l[0], l[1])
+                    }
+                };
+
+                // Let's deduce the addressing mode
+                use AddressingMode::*;
+                let mode = match params {
+                    "" => AddressingMode::Implied,
+                    x if x.starts_with('#') => Immediate,
+                    x if x.starts_with('(') => match x {
+                        x if x.ends_with(')') => Indirect,
+                        x if x.ends_with("),x") => IndirectX,
+                        x if x.ends_with("),y") => IndirectY,
+                        _ => panic!(),
+                    },
+                    x if x.starts_with('$') => Absolute,
+                    _ => panic!(),
+                };
+
+                let mut decoded = parse_params(params);
+
+                let unknown = 0xef;
+                let code = MNEMONICS.get(&(&mnemonic, mode)).unwrap_or(&unknown);
+
+                println!("{instruction:16} -> {mnemonic} {params:8} - {mode:12?} -> {code:4x} {decoded:x?}");
+
+                instructions.push(*code);
+                if mnemonic == "BNE" {
+                    instructions.push(0x03);
+                } else {
+                    instructions.append(&mut decoded);
+                }
+
+                // match mode {
+                //     Absolute => todo!(),
+                //     AbsoluteX => todo!(),
+                //     AbsoluteY => todo!(),
+                //     Immediate => instructions.append(decoded.clone().as_mut()),
+                //     Implied => continue,
+                //     Indirect => todo!(),
+                //     IndirectX => todo!(),
+                //     IndirectY => todo!(),
+                //     Relative => todo!(),
+                //     ZeroPage => todo!(),
+                //     ZeroPageX => todo!(),
+                //     ZeroPageY => todo!(),
+                // }
+            }
+        }
+
+        Block {
+            start,
+            instructions,
+        }
+    }
+}
+
+fn parse_params(params: &str) -> Vec<u8> {
+    let without_prefix = params
+        .trim_start_matches('(')
+        .trim_start_matches('#')
+        .trim_start_matches('$')
+        .trim_end_matches(')');
+
+    match without_prefix.len() {
+        0 => vec![],
+        1 | 2 => {
+            let lo = u8::from_str_radix(without_prefix, 16).unwrap();
+            vec![lo]
+        }
+        3 => {
+            let hi_str = &without_prefix[0..1];
+            let lo_str = &without_prefix[1..3];
+            let hi = u8::from_str_radix(hi_str, 16).unwrap();
+            let lo = u8::from_str_radix(lo_str, 16).unwrap();
+
+            // println!(
+            //     "{params}, {len} - {hi_str} {lo_str}, {lo} {hi}",
+            //     len = without_prefix.len()
+            // );
+            vec![lo, hi]
+        }
+        4 => {
+            let hi_str = &without_prefix[0..2];
+            let lo_str = &without_prefix[2..4];
+            let hi = u8::from_str_radix(hi_str, 16).unwrap();
+            let lo = u8::from_str_radix(lo_str, 16).unwrap();
+
+            // println!(
+            //     "{params}, {len} - {hi_str} {lo_str}, {lo} {hi}",
+            //     len = without_prefix.len()
+            // );
+            vec![lo, hi]
+        }
+        _ => panic!(),
+    }
+}
+
+impl Display for Block {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Block [\n  Start: {:04x}\n  Instructions: {:02x?}\n]",
+            self.start, self.instructions
+        )
     }
 }
 
@@ -319,5 +481,54 @@ mod tests {
             assert_eq!(result[line], expected[line]);
         }
         // cspell: enable
+    }
+
+    #[test]
+    fn should_assemble_block() {
+        let block = Block::assemble(
+            r"
+            *= $fce2    ; start here
+            LDX #$FF   
+            SEI        
+
+            TXS        
+            CLD        
+            ; Try this
+            JSR $FD02  
+            BNE $FCEF  
+            JMP ($8000)
+            STX $D016  
+; And this
+            JSR $FDA3  
+            JSR $FD50  
+            JSR $FD15  
+            JSR $FF5B  
+            CLI        
+            JMP ($A000)
+        ",
+        );
+
+        let expected = Block {
+            start: 0xFCE2,
+            instructions: vec![
+                0xa2, 0xff, 0x78, 0x9a, 0xd8, 0x20, 0x02, 0xfd, 0xd0, 0x03, 0x6c, 0x00, 0x80, 0x8e,
+                0x16, 0xd0, 0x20, 0xa3, 0xfd, 0x20, 0x50, 0xfd, 0x20, 0x15, 0xfd, 0x20, 0x5b, 0xff,
+                0x58, 0x6c, 0x00, 0xa0,
+            ],
+        };
+
+        println!("{}", expected);
+        println!("{}", block);
+
+        assert_eq!(block.start, expected.start);
+        assert_eq!(block.instructions.len(), expected.instructions.len());
+    }
+
+    #[test]
+    fn should_parse_params() {
+        let raw = "($a000)";
+        let result = parse_params(raw);
+
+        assert_eq!(vec![0x00, 0xa0], result);
     }
 }
