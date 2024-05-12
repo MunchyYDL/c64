@@ -68,6 +68,7 @@ static UNKNOWN_INSTRUCTION: Lazy<Instruction> =
 #[rustfmt::skip]
 static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
     use AddressingMode::*;
+
     HashMap::from([
         (0xa2, Instruction::new(0xa2, Immediate, "LDX".into(), 2, 0)),
         (0x78, Instruction::new(0x78, Implied,   "SEI".into(), 1, 0)),
@@ -91,8 +92,6 @@ static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
 
         // Math Instructions
 
-
-
         // Memory Instructions
         (0xa9, Instruction::new(0xa9, Immediate, "LDA".into(), 2, 2)),
         (0xa5, Instruction::new(0xa5, ZeroPage,  "LDA".into(), 2, 3)),
@@ -114,47 +113,48 @@ static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
         // more...
         
         // Register Instructions
-        (0xaa, Instruction::new(0xaa, Implied,    "TAX".into(), 1, 2)),
-        (0xa8, Instruction::new(0xa8, Implied,    "TAY".into(), 1, 2)),
-        (0x8a, Instruction::new(0x8a, Implied,    "TXA".into(), 1, 2)),
-        (0x98, Instruction::new(0x98, Implied,    "TYA".into(), 1, 2)),
+        (0xaa, Instruction::new(0xaa, Implied,   "TAX".into(), 1, 2)),
+        (0xa8, Instruction::new(0xa8, Implied,   "TAY".into(), 1, 2)),
+        (0x8a, Instruction::new(0x8a, Implied,   "TXA".into(), 1, 2)),
+        (0x98, Instruction::new(0x98, Implied,   "TYA".into(), 1, 2)),
 
-        (0xca, Instruction::new(0xca, Implied,    "DEX".into(), 1, 2)),
-        (0x88, Instruction::new(0x88, Implied,    "DEY".into(), 1, 2)),
-        (0xe8, Instruction::new(0xe8, Implied,    "INX".into(), 1, 2)),
-        (0xc8, Instruction::new(0xc8, Implied,    "INY".into(), 1, 2)),
+        (0xca, Instruction::new(0xca, Implied,   "DEX".into(), 1, 2)),
+        (0x88, Instruction::new(0x88, Implied,   "DEY".into(), 1, 2)),
+        (0xe8, Instruction::new(0xe8, Implied,   "INX".into(), 1, 2)),
+        (0xc8, Instruction::new(0xc8, Implied,   "INY".into(), 1, 2)),
 
         // Stack Instructions
-        (0x48, Instruction::new(0x48, Implied,  "PHA".into(), 1, 3)),
-        (0x08, Instruction::new(0x08, Implied,  "PHP".into(), 1, 3)),
-        (0x9a, Instruction::new(0x9a, Implied,  "TXS".into(), 1, 2)),
+        (0x48, Instruction::new(0x48, Implied,   "PHA".into(), 1, 3)),
+        (0x08, Instruction::new(0x08, Implied,   "PHP".into(), 1, 3)),
+        (0x9a, Instruction::new(0x9a, Implied,   "TXS".into(), 1, 2)),
         
-        (0x68, Instruction::new(0x68, Implied,  "PLA".into(), 1, 4)),
-        (0xba, Instruction::new(0xba, Implied,  "TSX".into(), 1, 2)),
+        (0x68, Instruction::new(0x68, Implied,   "PLA".into(), 1, 4)),
+        (0xba, Instruction::new(0xba, Implied,   "TSX".into(), 1, 2)),
         
-        (0x28, Instruction::new(0x28, Implied,  "PLP".into(), 1, 4)),
+        (0x28, Instruction::new(0x28, Implied,   "PLP".into(), 1, 4)),
         
         // Other Instructions
-        (0x00, Instruction::new(0x00, Implied,  "BRK".into(), 1, 7)),
-        (0xea, Instruction::new(0xea, Implied,  "NOP".into(), 1, 2)),      
+        (0x00, Instruction::new(0x00, Implied,   "BRK".into(), 1, 7)),
+        (0xea, Instruction::new(0xea, Implied,   "NOP".into(), 1, 2)),
 
         // FIXME: Unknown Instructions
-        (0x77, Instruction::unknown(0x77)),  
+        (0x77, Instruction::unknown(0x77)),
     ])
 });
 
+#[rustfmt::skip]
 static MNEMONICS: Lazy<HashMap<(&str, AddressingMode), u8>> = Lazy::new(|| {
     use AddressingMode::*;
     HashMap::from([
         (("LDX", Immediate), 0xa2),
-        (("SEI", Implied), 0x78),
-        (("TXS", Implied), 0x9a),
-        (("CLD", Implied), 0xd8),
-        (("JSR", Absolute), 0x20),
-        (("BNE", Absolute), 0xd0),
-        (("CLI", Implied), 0x58),
-        (("STX", Absolute), 0x8e),
-        (("JMP", Indirect), 0x6c),
+        (("SEI", Implied),   0x78),
+        (("TXS", Implied),   0x9a),
+        (("CLD", Implied),   0xd8),
+        (("JSR", Absolute),  0x20),
+        (("BNE", Absolute),  0xd0),
+        (("CLI", Implied),   0x58),
+        (("STX", Absolute),  0x8e),
+        (("JMP", Indirect),  0x6c),
         // (("LDA", Absolute), 0x00), (("LDA", Immediate), 0x00)
     ])
 });
@@ -299,7 +299,7 @@ impl Block {
                 let mut decoded = parse_params(params);
 
                 let unknown = 0xef;
-                let code = MNEMONICS.get(&(&mnemonic, mode)).unwrap_or(&unknown);
+                let code = MNEMONICS.get(&(mnemonic, mode)).unwrap_or(&unknown);
 
                 println!("{instruction:16} -> {mnemonic} {params:8} - {mode:12?} -> {code:4x} {decoded:x?}");
 
