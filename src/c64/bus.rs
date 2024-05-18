@@ -12,7 +12,7 @@ impl Bus {
         Bus { memory }
     }
 
-    pub fn read(&self, address: usize) -> u8 {
+    pub fn read(&self, address: u16) -> u8 {
         if (0x0000..=0xffff).contains(&address) {
             self.memory.borrow().read(address)
         } else {
@@ -20,7 +20,7 @@ impl Bus {
         }
     }
 
-    pub fn write(&mut self, address: usize, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8) {
         if (0x0000..=0xffff).contains(&address) {
             self.memory.borrow_mut().write(address, value);
         }

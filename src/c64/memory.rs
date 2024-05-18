@@ -10,11 +10,11 @@ impl Memory {
         }
     }
 
-    pub fn read(&self, address: usize) -> u8 {
-        *self.internal.get(address).unwrap()
+    pub fn read(&self, address: u16) -> u8 {
+        *self.internal.get(address as usize).unwrap()
     }
 
-    pub fn write(&mut self, address: usize, value: u8) {
-        self.internal[address] = value;
+    pub fn write(&mut self, address: u16, value: u8) {
+        self.internal[address as usize] = value;
     }
 }

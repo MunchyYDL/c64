@@ -133,11 +133,11 @@ impl Cpu {
     //     self.bus = bus;
     // }
 
-    pub fn read(&self, address: usize) -> u8 {
+    pub fn read(&self, address: u16) -> u8 {
         self.bus.borrow().read(address)
     }
 
-    pub fn write(&mut self, address: usize, value: u8) {
+    pub fn write(&mut self, address: u16, value: u8) {
         self.bus.borrow_mut().write(address, value);
     }
 

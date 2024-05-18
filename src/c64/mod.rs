@@ -171,7 +171,7 @@ mod tests {
         };
 
         show(&block);
-        let mut address = block.start as usize;
+        let mut address = block.start;
         for b in block.instructions.iter() {
             c64.cpu.write(address, *b);
             address += 1;
