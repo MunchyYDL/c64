@@ -215,4 +215,57 @@ mod tests {
             byte1, byte2, byte3, byte4
         );
     }
+
+    #[test]
+    fn should_copy_block_from_memory() {
+        let c64 = C64::new();
+
+        let block = c64.memory.borrow().read_block(0x1000, 0x04);
+
+        assert_eq!(block.start, 0x1000);
+        assert_eq!(block.instructions, vec![0; 4]);
+
+        // Modify the memory a bit
+        {
+            let mut mem = c64.memory.borrow_mut();
+            mem.write(0x1000, 0xca);
+            mem.write(0x1001, 0xfe);
+            mem.write(0x1002, 0xba);
+            mem.write(0x1003, 0xbe);
+
+            let byte1 = mem.read(0x1000);
+            let byte2 = mem.read(0x1001);
+            let byte3 = mem.read(0x1002);
+            let byte4 = mem.read(0x1003);
+
+            println!(
+                "MEM Read: {:02x} {:02x} {:02x} {:02x}",
+                byte1, byte2, byte3, byte4
+            );
+        }
+
+        let block = c64.memory.borrow().read_block(0x1000, 0x04);
+
+        assert_eq!(block.start, 0x1000);
+        assert_eq!(block.instructions, vec![0xca, 0xfe, 0xba, 0xbe]);
+    }
+
+    #[test]
+    fn should_write_block_to_memory() {
+        let c64 = C64::new();
+
+        let block1 = Block {
+            start: 0xc000,
+            instructions: vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa],
+        };
+
+        c64.memory.borrow_mut().write_block(&block1);
+
+        let block2 = c64.memory.borrow().read_block(0xc000, 10);
+
+        show(&block1);
+        show(&block2);
+
+        assert_eq!(&block1, &block2);
+    }
 }
