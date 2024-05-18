@@ -4,27 +4,45 @@ pub mod block;
 pub mod bus;
 pub mod cpu;
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use self::block::Block;
 use self::bus::Bus;
 use self::cpu::Cpu;
 
-pub(crate) struct C64 {
-    memory: Memory,
-    cpu: Cpu,
-    bus: Bus,
+#[derive(Debug)]
+pub(crate) struct Memory {
+    internal: [u8; 0xffff],
 }
 
-type Memory = [u8; 0xffff];
+impl Memory {
+    pub fn new() -> Self {
+        Memory {
+            internal: [0x00; 0xffff],
+        }
+    }
+
+    pub fn read(&self, address: usize) -> u8 {
+        *self.internal.get(address).unwrap()
+    }
+
+    pub fn write(&mut self, address: usize, value: u8) {
+        self.internal[address] = value;
+    }
+}
+
+pub(crate) struct C64 {
+    cpu: Cpu,
+    memory: Rc<RefCell<Memory>>,
+    bus: Rc<RefCell<Bus>>,
+}
 
 impl C64 {
-    // FIXME: This is a shitty implementation for now,
-    // lets get back to this and fix it...
     pub fn new() -> Self {
-        let mut cpu = Cpu::new();
-        let memory: Memory = [0; 0xffff];
-        let bus = Bus::new(cpu.clone(), memory);
-
-        cpu.connect_bus(bus.clone());
+        let memory = Rc::new(RefCell::new(Memory::new()));
+        let bus = Rc::new(RefCell::new(Bus::new(memory.clone())));
+        let cpu = Cpu::new(bus.clone());
 
         C64 { cpu, memory, bus }
     }
@@ -188,11 +206,27 @@ mod tests {
 
     #[test]
     fn should_be_able_to_modify_memory_directly() {
-        let mut c64 = C64::new();
-        c64.memory[0x1000] = 0xca;
-        c64.memory[0x1001] = 0xfe;
-        c64.memory[0x1002] = 0xba;
-        c64.memory[0x1003] = 0xbe;
+        let memory = Rc::new(RefCell::new(Memory::new()));
+        let bus = Rc::new(RefCell::new(Bus::new(memory.clone())));
+        let cpu = Cpu::new(bus.clone());
+
+        let c64 = C64 { memory, cpu, bus };
+
+        // let c64 = C64::new();
+        c64.memory.borrow_mut().write(0x1000, 0xca);
+        c64.memory.borrow_mut().write(0x1001, 0xfe);
+        c64.memory.borrow_mut().write(0x1002, 0xba);
+        c64.memory.borrow_mut().write(0x1003, 0xbe);
+
+        let byte1 = c64.memory.borrow().read(0x1000);
+        let byte2 = c64.memory.borrow().read(0x1001);
+        let byte3 = c64.memory.borrow().read(0x1002);
+        let byte4 = c64.memory.borrow().read(0x1003);
+
+        println!(
+            "MEM Read: {:02x} {:02x} {:02x} {:02x}",
+            byte1, byte2, byte3, byte4
+        );
 
         let byte1 = c64.cpu.read(0x1000);
         let byte2 = c64.cpu.read(0x1001);

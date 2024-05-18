@@ -21,13 +21,13 @@
   mapped to regions of memory in order to exchanges data with the hardware latches.
 */
 
-use std::{collections::HashMap, fmt::Display};
+use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 use once_cell::sync::Lazy;
 
 use super::{block::Block, bus::Bus};
 
-#[derive(Clone, Default, Debug)]
+#[derive(Debug)]
 pub struct Cpu {
     /// Program Counter
     ///
@@ -50,7 +50,7 @@ pub struct Cpu {
     cycles: u8,
 
     // The connected bus
-    bus: Option<Box<Bus>>,
+    bus: Rc<RefCell<Bus>>,
 }
 
 impl Display for Cpu {
@@ -86,10 +86,18 @@ impl Display for Cpu {
 }
 
 impl Cpu {
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(bus: Rc<RefCell<Bus>>) -> Self {
+        Cpu {
+            PC: 0xffc,
+            SP: 0x00,
+            A: 0x00,
+            X: 0x00,
+            Y: 0x00,
+            SR: 0x00,
+            cycles: 0,
+            bus,
+        }
     }
-
     pub fn reset(&mut self) {
         self.PC = 0xfffc;
         self.SP = 0x00;
@@ -120,23 +128,17 @@ impl Cpu {
         self.SR |= flag as u8;
     }
 
-    // Bus related
-    pub fn connect_bus(&mut self, bus: Bus) {
-        self.bus = Some(Box::new(bus))
-    }
+    // // Bus related
+    // pub fn connect_bus(&mut self, bus: Bus) {
+    //     self.bus = bus;
+    // }
 
     pub fn read(&self, address: usize) -> u8 {
-        if let Some(bus) = &self.bus {
-            bus.read(address)
-        } else {
-            0x00
-        }
+        self.bus.borrow().read(address)
     }
 
     pub fn write(&mut self, address: usize, value: u8) {
-        if let Some(bus) = &mut self.bus {
-            bus.write(address, value);
-        }
+        self.bus.borrow_mut().write(address, value);
     }
 
     fn step(&self, block: &Block) {
@@ -583,11 +585,21 @@ pub enum StatusFlags {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+
+    use crate::c64::Memory;
+
     use super::*;
+
+    fn setup() -> Cpu {
+        let memory = Rc::new(RefCell::new(Memory::new()));
+        let bus = Rc::new(RefCell::new(Bus::new(memory)));
+        Cpu::new(bus)
+    }
 
     #[test]
     fn test_reset() {
-        let mut cpu = Cpu::new();
+        let mut cpu = setup();
         cpu.reset();
 
         assert_eq!(cpu.PC, 0xfffc);
@@ -596,16 +608,14 @@ mod tests {
 
     #[test]
     fn should_set_flag() {
-        let mut cpu = Cpu::new();
-
+        let mut cpu = setup();
         cpu.set_flag(StatusFlags::D);
         assert!(cpu.get_flag(StatusFlags::D));
     }
 
     #[test]
     fn should_clear_flag() {
-        let mut cpu = Cpu::new();
-
+        let mut cpu = setup();
         cpu.SR = StatusFlags::D as u8;
         assert!(cpu.get_flag(StatusFlags::D));
 
@@ -615,7 +625,7 @@ mod tests {
 
     #[test]
     fn test_op_sei() {
-        let mut cpu = Cpu::new();
+        let mut cpu = setup();
         println!("CPU - {}", cpu);
 
         cpu.op_sei();

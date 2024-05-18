@@ -6,8 +6,8 @@ use crate::c64::block::Block;
 
 fn main() -> io::Result<()> {
     // program()?;
-    block1();
-    // block2();
+    // block1();
+    block2();
     Ok(())
 }
 
