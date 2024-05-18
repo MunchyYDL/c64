@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
-use crate::c64::{AddressingMode, MNEMONICS};
+use crate::c64::cpu::{AddressingMode, MNEMONICS};
 
-use super::{decode, Instruction};
+use super::cpu::{decode, Instruction};
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Block {
