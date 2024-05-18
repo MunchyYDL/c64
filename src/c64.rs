@@ -45,7 +45,7 @@ impl Default for C64 {
 
 #[cfg(test)]
 mod tests {
-    use tests::{block::parse_params, cpu::StatusFlags};
+    use tests::block::parse_params;
 
     use crate::show;
 
@@ -55,7 +55,6 @@ mod tests {
     fn should_be_able_to_init_the_machine() {
         let mut c64 = C64::new();
         c64.reset();
-        c64.cpu.set_flag(StatusFlags::I);
         println!("CPU - {}", c64.cpu);
         assert_eq!(c64.cpu.PC, 0xfffc);
     }
@@ -137,7 +136,7 @@ mod tests {
         );
 
         let expected = Block {
-            start: 0xFCE2,
+            start: 0xfce2,
             instructions: vec![
                 0xa2, 0xff, 0x78, 0x9a, 0xd8, 0x20, 0x02, 0xfd, 0xd0, 0x03, 0x6c, 0x00, 0x80, 0x8e,
                 0x16, 0xd0, 0x20, 0xa3, 0xfd, 0x20, 0x50, 0xfd, 0x20, 0x15, 0xfd, 0x20, 0x5b, 0xff,

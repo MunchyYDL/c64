@@ -20,9 +20,14 @@
   mapped to regions of memory in order to exchanges data with the hardware latches.
 */
 
+pub mod status_register;
+pub use status_register::StatusFlags;
+
 use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 use once_cell::sync::Lazy;
+
+use self::status_register::StatusRegister;
 
 use super::bus::Bus;
 
@@ -44,7 +49,7 @@ pub struct Cpu {
     /// Index register Y
     pub Y: u8,
     /// Status Registers
-    pub SR: u8,
+    pub SR: StatusRegister,
 
     // The amount of cycles still left for the last operation to complete
     cycles: u8,
@@ -55,32 +60,10 @@ pub struct Cpu {
 
 impl Display for Cpu {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let sr = {
-            use StatusFlags::*;
-            let n = self.get_flag(N);
-            let v = self.get_flag(V);
-            let b = self.get_flag(B);
-            let d = self.get_flag(D);
-            let i = self.get_flag(I);
-            let z = self.get_flag(Z);
-            let c = self.get_flag(C);
-
-            let mut sr = String::new();
-            sr.push(if n { 'N' } else { 'n' });
-            sr.push(if v { 'V' } else { 'v' });
-            sr.push('-');
-            sr.push(if d { 'D' } else { 'd' });
-            sr.push(if i { 'I' } else { 'i' });
-            sr.push(if z { 'Z' } else { 'z' });
-            sr.push(if c { 'C' } else { 'c' });
-
-            sr
-        };
-
-        writeln!(
+        write!(
             f,
-            "PC: {:04x}, SP: {:04x}, A: {:02x}, X: {:02x}, Y: {:02x} - SR: {} ({:08b})",
-            self.PC, self.SP, self.A, self.X, self.Y, sr, self.SR
+            "PC: {:04x}, SP: {:04x}, A: {:02x}, X: {:02x}, Y: {:02x} - SR: {}",
+            self.PC, self.SP, self.A, self.X, self.Y, self.SR
         )
     }
 }
@@ -93,11 +76,12 @@ impl Cpu {
             A: 0x00,
             X: 0x00,
             Y: 0x00,
-            SR: 0x00,
+            SR: StatusRegister(0),
             cycles: 0,
             bus,
         }
     }
+
     pub fn reset(&mut self) {
         self.PC = 0xfffc;
         self.SP = 0x00;
@@ -115,19 +99,24 @@ impl Cpu {
         // to work through for the last op?
     }
 
-    // Status Register - SR - Manipulation
+    //* Status Register - SR - Manipulation
     pub fn clear_flag(&mut self, flag: StatusFlags) {
-        self.SR &= !(flag as u8)
+        // self.SR &= !(flag as u8)
+        self.SR.clear(flag);
     }
 
     pub fn get_flag(&self, flag: StatusFlags) -> bool {
-        (self.SR & flag as u8) > 0
+        // (self.SR & flag as u8) > 0
+        self.SR.get(flag)
     }
 
-    pub fn set_flag(&mut self, flag: StatusFlags) {
-        self.SR |= flag as u8;
+    fn set_flag(&mut self, flag: StatusFlags) {
+        // self.SR |= flag as u8;
+        self.SR.set(flag);
     }
 
+    //* Memory Access
+    // TODO: Should these be private instead?
     pub fn read(&self, address: u16) -> u8 {
         self.bus.borrow().read(address)
     }
@@ -136,6 +125,9 @@ impl Cpu {
         self.bus.borrow_mut().write(address, value);
     }
 
+    //* Addressing Modes
+
+    //* Operations
     fn op_sei(&mut self) {
         self.set_flag(StatusFlags::I);
     }
@@ -537,27 +529,6 @@ pub(crate) static MNEMONICS: Lazy<HashMap<(&str, AddressingMode), u8>> = Lazy::n
     map
 });
 
-#[derive(Clone, Copy)]
-#[repr(u8)]
-pub enum StatusFlags {
-    /// Carry bit
-    C = (1 << 0),
-    /// Zero
-    Z = (1 << 1),
-    /// Disable Interrupts
-    I = (1 << 2),
-    /// Decimal Mode
-    D = (1 << 3),
-    /// Break
-    B = (1 << 4),
-    /// Unused
-    // U = (1 << 5),
-    /// Overflow
-    V = (1 << 6),
-    /// Negative
-    N = (1 << 7),
-}
-
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
@@ -591,7 +562,7 @@ mod tests {
     #[test]
     fn should_clear_flag() {
         let mut cpu = setup();
-        cpu.SR = StatusFlags::D as u8;
+        cpu.SR = StatusRegister(StatusFlags::D as u8);
         assert!(cpu.get_flag(StatusFlags::D));
 
         cpu.clear_flag(StatusFlags::D);
