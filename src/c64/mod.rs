@@ -454,7 +454,9 @@ impl Default for C64 {
 
 #[cfg(test)]
 mod tests {
-    use tests::block::parse_params;
+    use tests::{block::parse_params, cpu::StatusFlags};
+
+    use crate::show;
 
     use super::*;
 
@@ -462,6 +464,8 @@ mod tests {
     fn should_be_able_to_init_the_machine() {
         let mut c64 = C64::new();
         c64.reset();
+        c64.cpu.set_flag(StatusFlags::I);
+        println!("CPU - {}", c64.cpu);
         assert_eq!(c64.cpu.PC, 0xfffc);
     }
 
@@ -563,5 +567,49 @@ mod tests {
         let result = parse_params(raw);
 
         assert_eq!(vec![0x00, 0xa0], result);
+    }
+
+    #[test]
+    fn should_copy_block_to_memory() {
+        let mut c64 = C64::new();
+        c64.reset();
+
+        let block = Block {
+            start: 0x1000,
+            instructions: vec![0x78, 0x58, 0x00],
+        };
+
+        show(&block);
+        let mut address = block.start as usize;
+        for b in block.instructions.iter() {
+            // println!("writing {:02x} to {:04x}", b, address);
+            c64.cpu.write(address, *b);
+            address += 1;
+        }
+
+        let byte1 = c64.cpu.read(0x1000);
+        let byte2 = c64.cpu.read(0x1001);
+        let byte3 = c64.cpu.read(0x1002);
+
+        println!("CPU Read: {:02x} {:02x} {:02x}", byte1, byte2, byte3);
+    }
+
+    #[test]
+    fn should_be_able_to_modify_memory_directly() {
+        let mut c64 = C64::new();
+        c64.memory[0x1000] = 0xca;
+        c64.memory[0x1001] = 0xfe;
+        c64.memory[0x1002] = 0xba;
+        c64.memory[0x1003] = 0xbe;
+
+        let byte1 = c64.cpu.read(0x1000);
+        let byte2 = c64.cpu.read(0x1001);
+        let byte3 = c64.cpu.read(0x1002);
+        let byte4 = c64.cpu.read(0x1003);
+
+        println!(
+            "CPU Read: {:02x} {:02x} {:02x} {:02x}",
+            byte1, byte2, byte3, byte4
+        );
     }
 }

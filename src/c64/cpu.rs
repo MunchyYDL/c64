@@ -21,7 +21,9 @@
   mapped to regions of memory in order to exchanges data with the hardware latches.
 */
 
-use super::bus::Bus;
+use std::fmt::Display;
+
+use super::{block::Block, bus::Bus};
 
 #[derive(Clone, Default, Debug)]
 pub struct Cpu {
@@ -29,10 +31,10 @@ pub struct Cpu {
     ///
     /// The program counter is a 16 bit register which points to the next instruction
     /// to be executed. The value of the PC is modified automatically as instructions
-    /// are executed
+    /// are executed.
     pub PC: u16,
     /// Stack Pointer
-    pub SP: u16,
+    pub SP: u8,
     /// Accumulator
     pub A: u8,
     /// Index register X
@@ -47,6 +49,38 @@ pub struct Cpu {
 
     // The connected bus
     bus: Option<Box<Bus>>,
+}
+
+impl Display for Cpu {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let sr = {
+            use StatusFlags::*;
+            let n = self.get_flag(N);
+            let v = self.get_flag(V);
+            let b = self.get_flag(B);
+            let d = self.get_flag(D);
+            let i = self.get_flag(I);
+            let z = self.get_flag(Z);
+            let c = self.get_flag(C);
+
+            let mut sr = String::new();
+            sr.push(if n { 'N' } else { 'n' });
+            sr.push(if v { 'V' } else { 'v' });
+            sr.push('-');
+            sr.push(if d { 'D' } else { 'd' });
+            sr.push(if i { 'I' } else { 'i' });
+            sr.push(if z { 'Z' } else { 'z' });
+            sr.push(if c { 'C' } else { 'c' });
+
+            sr
+        };
+
+        writeln!(
+            f,
+            "PC: {:04x}, SP: {:04x}, A: {:02x}, X: {:02x}, Y: {:02x} - SR: {} ({:08b})",
+            self.PC, self.SP, self.A, self.X, self.Y, sr, self.SR
+        )
+    }
 }
 
 impl Cpu {
@@ -102,6 +136,21 @@ impl Cpu {
             bus.write(address, value);
         }
     }
+
+    fn step(&self, block: &Block) {
+
+        //* 1. Copy block to memory
+        //* 2. Set PC to start of block?
+        //*
+    }
+
+    fn op_sei(&mut self) {
+        self.set_flag(StatusFlags::I);
+    }
+
+    fn op_cli(&mut self) {
+        self.clear_flag(StatusFlags::I)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -117,8 +166,8 @@ pub enum StatusFlags {
     D = (1 << 3),
     /// Break
     B = (1 << 4),
-    // Unused
-    U = (1 << 5),
+    /// Unused
+    // U = (1 << 5),
     /// Overflow
     V = (1 << 6),
     /// Negative
@@ -155,5 +204,17 @@ mod tests {
 
         cpu.clear_flag(StatusFlags::D);
         assert!(!cpu.get_flag(StatusFlags::D));
+    }
+
+    #[test]
+    fn test_op_sei() {
+        let mut cpu = Cpu::new();
+        println!("CPU - {}", cpu);
+
+        cpu.op_sei();
+        println!("CPU - {}", cpu);
+
+        cpu.op_cli();
+        println!("CPU - {}", cpu);
     }
 }

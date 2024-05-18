@@ -15,7 +15,7 @@ fn program() -> io::Result<()> {
     // let data: Vec<u8> = fs::read("./files/prg/0 and X (1987)(Wicked Software).prg")?;
     let data: Vec<u8> = fs::read("./files/prg/1001 Cracking Crew #06 (19xx)(1001 Crew).prg")?;
     let block = Block::from_prg(data);
-    show(block);
+    show(&block);
     Ok(())
 }
 
@@ -24,7 +24,7 @@ fn block1() {
         start: 0x0801,
         instructions: vec![0x78, 0x77, 0x78, 0x20, 0x02, 0x34],
     };
-    show(block);
+    show(&block);
 }
 
 fn block2() {
@@ -36,10 +36,10 @@ fn block2() {
             0x58, 0x6c, 0x00, 0xa0,
         ],
     };
-    show(block);
+    show(&block);
 }
 
-fn show(block: Block) {
+fn show(block: &Block) {
     show_vec(&block.memory());
     show_vec(&block.disassemble());
 }

@@ -13,9 +13,10 @@ impl Bus {
 
     pub fn read(&self, address: usize) -> u8 {
         if (0x0000..=0xffff).contains(&address) {
-            return self.memory[address];
+            *self.memory.get(address).unwrap()
+        } else {
+            0x00 // Default
         }
-        0x00 // Default
     }
 
     pub fn write(&mut self, address: usize, value: u8) {
