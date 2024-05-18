@@ -25,7 +25,7 @@ use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
 
 use once_cell::sync::Lazy;
 
-use super::{block::Block, bus::Bus};
+use super::bus::Bus;
 
 #[derive(Debug)]
 pub struct Cpu {
@@ -88,7 +88,7 @@ impl Display for Cpu {
 impl Cpu {
     pub fn new(bus: Rc<RefCell<Bus>>) -> Self {
         Cpu {
-            PC: 0xffc,
+            PC: 0xfffc,
             SP: 0x00,
             A: 0x00,
             X: 0x00,
@@ -139,13 +139,6 @@ impl Cpu {
 
     pub fn write(&mut self, address: usize, value: u8) {
         self.bus.borrow_mut().write(address, value);
-    }
-
-    fn step(&self, block: &Block) {
-
-        //* 1. Copy block to memory
-        //* 2. Set PC to start of block?
-        //*
     }
 
     fn op_sei(&mut self) {
@@ -222,7 +215,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         //* Bitwise Instructions
 
         //* AND - Bitwise AND with Accumulator - Flags: Nv-bdiZc
-        ("AND", vec![
+        ("and", vec![
             (Immediate,   0x29, 2, 2, 0),
             (ZeroPage,    0x25, 2, 3, 0),
             (ZeroPageX,   0x35, 2, 4, 0),
@@ -234,7 +227,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* ASL - Arithmetic Shift Left - Flags: Nv-bdiZC
-        ("ASL", vec![
+        ("asl", vec![
             (Accumulator, 0x0a, 1, 2, 0),
             (ZeroPage,    0x06, 2, 5, 0),
             (ZeroPageX,   0x16, 2, 6, 0),
@@ -243,7 +236,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* EOR - Bitwise Exclusive-OR with Accumulator - Flags: Nv-bdiZc
-        ("EOR", vec![
+        ("eor", vec![
             (Immediate,   0x49, 2, 2, 0),
             (ZeroPage,    0x45, 2, 3, 0),
             (ZeroPageX,   0x55, 2, 4, 0),
@@ -255,7 +248,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* ORA - Bitwise OR with Accumulator - Flags: Nv-bdiZc
-        ("ORA", vec![
+        ("ora", vec![
             (Immediate,   0x09, 2, 2, 0),
             (ZeroPage,    0x05, 2, 3, 0),
             (ZeroPageX,   0x15, 2, 4, 0),
@@ -267,7 +260,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* LSR - Logical Shift Right - Flags: Nv-bdiZC
-        ("LSR", vec![
+        ("lsr", vec![
             (Accumulator, 0x44, 1, 2, 0),
             (ZeroPage,    0x46, 2, 5, 0),
             (ZeroPageX,   0x56, 2, 6, 0),
@@ -276,7 +269,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* ROL - Rotate Left - Flags: Nv-bdiZC
-        ("ROL", vec![
+        ("rol", vec![
             (Accumulator, 0x2a, 1, 2, 0),
             (ZeroPage,    0x26, 2, 5, 0),
             (ZeroPageX,   0x36, 2, 6, 0),
@@ -285,7 +278,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* ROR - Rotate Right - Flags: Nv-bdiZC
-        ("ROR", vec![
+        ("ror", vec![
             (Accumulator, 0x6a, 1, 2, 0),
             (ZeroPage,    0x66, 2, 5, 0),
             (ZeroPageX,   0x76, 2, 6, 0),
@@ -295,23 +288,23 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
 
 
         //* Branch Instructions
-        ("BPL", vec![(Relative, 0x10, 2, 2, 2)]), //* BPL - Branch on Plus
-        ("BMI", vec![(Relative, 0x30, 2, 2, 2)]), //* BMI - Branch on Minus
+        ("bpl", vec![(Relative, 0x10, 2, 2, 2)]), //* BPL - Branch on Plus
+        ("bmi", vec![(Relative, 0x30, 2, 2, 2)]), //* BMI - Branch on Minus
 
-        ("BVC", vec![(Relative, 0x50, 2, 2, 2)]), //* BVC - Branch on Overflow Clear
-        ("BVS", vec![(Relative, 0x70, 2, 2, 2)]), //* BVS - Branch on Overflow Set
+        ("bvc", vec![(Relative, 0x50, 2, 2, 2)]), //* BVC - Branch on Overflow Clear
+        ("bvs", vec![(Relative, 0x70, 2, 2, 2)]), //* BVS - Branch on Overflow Set
 
-        ("BCC", vec![(Relative, 0x90, 2, 2, 2)]), //* BCC - Branch on Carry Clear
-        ("BCS", vec![(Relative, 0xb0, 2, 2, 2)]), //* BCS - Branch on Carry Set
+        ("bcc", vec![(Relative, 0x90, 2, 2, 2)]), //* BCC - Branch on Carry Clear
+        ("bcs", vec![(Relative, 0xb0, 2, 2, 2)]), //* BCS - Branch on Carry Set
 
-        ("BNE", vec![(Relative, 0xd0, 2, 2, 2)]), //* BNE - Branch on Not Equal
-        ("BEQ", vec![(Relative, 0xf0, 2, 2, 2)]), //* BEQ - Branch on Equal
+        ("bne", vec![(Relative, 0xd0, 2, 2, 2)]), //* BNE - Branch on Not Equal
+        ("beq", vec![(Relative, 0xf0, 2, 2, 2)]), //* BEQ - Branch on Equal
 
 
         //* Compare Instructions
 
         //* CMP - Compare Accumulator - Flags: Nv-bdiZC
-        ("CMP", vec![
+        ("cmp", vec![
             (Immediate,   0xc9, 2, 2, 0),
             (ZeroPage,    0xc5, 2, 3, 0),
             (ZeroPageX,   0xd5, 2, 4, 0),
@@ -323,59 +316,59 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* CPX - Compare X Register - Flags: Nv-bdiZC
-        ("CPX", vec![
+        ("cpx", vec![
             (Immediate,   0xe0, 2, 2, 0),
             (ZeroPage,    0xe4, 2, 3, 0),
             (Absolute,    0xec, 3, 4, 0),
         ]),
 
         //* CPY - Compare Y Register - Flags: Nv-bdiZC
-        ("CPY", vec![
+        ("cpy", vec![
             (Immediate,   0xc0, 2, 2, 0),
             (ZeroPage,    0xc4, 2, 3, 0),
             (Absolute,    0xcc, 3, 4, 0),
         ]),
 
         //* BIT - Test Bits - Flags: NV-bdiZc
-        ("BIT", vec![
+        ("bit", vec![
             (ZeroPage,    0x24, 2, 3, 0),
             (Absolute,    0x2c, 3, 4, 0),
         ]),
 
 
         //* Flag Instructions
-        ("CLC", vec![(Implied, 0x18, 1, 2, 0)]), //* CLC - Clear Carry
-        ("SEC", vec![(Implied, 0x38, 1, 2, 0)]), //* SEC - Set Carry
+        ("clc", vec![(Implied, 0x18, 1, 2, 0)]), //* CLC - Clear Carry
+        ("sec", vec![(Implied, 0x38, 1, 2, 0)]), //* SEC - Set Carry
 
-        ("CLD", vec![(Implied, 0xd8, 1, 2, 0)]), //* CLC - Clear Decimal
-        ("SED", vec![(Implied, 0xf8, 1, 2, 0)]), //* SEC - Set Decimal
+        ("cld", vec![(Implied, 0xd8, 1, 2, 0)]), //* CLD - Clear Decimal
+        ("sed", vec![(Implied, 0xf8, 1, 2, 0)]), //* SED - Set Decimal
 
-        ("CLI", vec![(Implied, 0x58, 1, 2, 0)]), //* CLC - Clear Interrupt
-        ("SEI", vec![(Implied, 0x78, 1, 2, 0)]), //* SEC - Set Interrupt
+        ("cli", vec![(Implied, 0x58, 1, 2, 0)]), //* CLC - Clear Interrupt
+        ("sei", vec![(Implied, 0x78, 1, 2, 0)]), //* SEC - Set Interrupt
 
-        ("CLV", vec![(Implied, 0xb8, 1, 2, 0)]), //* CLC - Clear Overflow
+        ("clv", vec![(Implied, 0xb8, 1, 2, 0)]), //* CLC - Clear Overflow
 
 
         //* Jump Instructions
         //* JMP - Jump
-        ("JMP", vec![
+        ("jmp", vec![
             (Absolute, 0x4c, 3, 3, 0),
             (Indirect, 0x6c, 3, 5, 0),
         ]),
 
         //* JSR - Jump Saving Return
-        ("JSR", vec![(Absolute, 0x20, 3, 6, 0)]),
+        ("jsr", vec![(Absolute, 0x20, 3, 6, 0)]),
 
         //* RTS - Return to Saved
-        ("RTS", vec![(Implied, 0x60, 1, 6, 0)]),
+        ("rts", vec![(Implied, 0x60, 1, 6, 0)]),
 
         //* RTI - Return from Interrupt
-        ("RTI", vec![(Implied, 0x40, 1, 6, 0)]),
+        ("rti", vec![(Implied, 0x40, 1, 6, 0)]),
 
 
         //* Math Instructions
         //* ADC - Add with Carry - Flags: NV-bdiZC
-        ("ADC",
+        ("adc",
         vec![
             (Immediate, 0x69, 2, 2, 0),
             (ZeroPage,  0x65, 2, 3, 0),
@@ -387,8 +380,8 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
             (IndirectY, 0x71, 2, 5, 1),
         ]),
 
-        //* ABC - Subtract with Carry - Flags: NV-bdiZC
-        ("SBC",
+        //* SBC - Subtract with Carry - Flags: NV-bdiZC
+        ("sbc",
         vec![
             (Immediate, 0xe9, 2, 2, 0),
             (ZeroPage,  0xe5, 2, 3, 0),
@@ -403,7 +396,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         //* Memory Instructions
 
         //* LDA - Load Accumulator - Flags: Nv-bdiZc
-        ("LDA",
+        ("lda",
         vec![
             (Immediate, 0xa9, 2, 2, 0),
             (ZeroPage,  0xa5, 2, 3, 0),
@@ -416,7 +409,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* STA - Store Accumulator
-        ("STA",
+        ("sta",
         vec![
             (ZeroPage,  0x85, 2, 3, 0),
             (ZeroPageX, 0x95, 2, 4, 0),
@@ -428,7 +421,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* LDX - Load X Register - Flags: Nv-bdiZc
-        ("LDX",
+        ("ldx",
         vec![
             (Immediate, 0xa2, 2, 2, 0),
             (ZeroPage,  0xa6, 2, 3, 0),
@@ -438,7 +431,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* STX - Store X Register
-        ("STX",
+        ("stx",
         vec![
             (ZeroPage,  0x86, 2, 3, 0),
             (ZeroPageY, 0x96, 2, 4, 0),
@@ -447,7 +440,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
 
 
         //* LDY - Load Y Register - Flags: Nv-bdiZc
-        ("LDY",
+        ("ldy",
         vec![
             (Immediate, 0xa0, 2, 2, 0),
             (ZeroPage,  0xa4, 2, 3, 0),
@@ -457,7 +450,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* STY - Store Y Register
-        ("STY",
+        ("sty",
         vec![
             (ZeroPage,  0x84, 2, 3, 0),
             (ZeroPageX, 0x94, 2, 4, 0),
@@ -465,7 +458,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* DEC - Decrement Memory - Flags: Nv-bdiZc
-        ("DEC",
+        ("dec",
         vec![
             (ZeroPage,  0xc6, 2, 5, 0),
             (ZeroPageX, 0xd6, 2, 6, 0),
@@ -474,7 +467,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* INC - Increment Memory - Flags: Nv-bdiZc
-        ("INC",
+        ("inc",
         vec![
             (ZeroPage,  0xe6, 2, 5, 0),
             (ZeroPageX, 0xf6, 2, 6, 0),
@@ -485,33 +478,33 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
 
         //* Register Instructions
 
-        ("TAX", vec![(Implied, 0xaa, 1, 2, 0)]), //* TAX - Transfer A to X
-        ("TAY", vec![(Implied, 0xa8, 1, 2, 0)]), //* TAY - Transfer A to Y
-        ("TXA", vec![(Implied, 0x8a, 1, 2, 0)]), //* TXA - Transfer X to A
-        ("TYA", vec![(Implied, 0x98, 1, 2, 0)]), //* TYA - Transfer Y to A
+        ("tax", vec![(Implied, 0xaa, 1, 2, 0)]), //* TAX - Transfer A to X
+        ("tay", vec![(Implied, 0xa8, 1, 2, 0)]), //* TAY - Transfer A to Y
+        ("txa", vec![(Implied, 0x8a, 1, 2, 0)]), //* TXA - Transfer X to A
+        ("tya", vec![(Implied, 0x98, 1, 2, 0)]), //* TYA - Transfer Y to A
 
-        ("DEX", vec![(Implied, 0xca, 1, 2, 0)]), //* DEX - Decrement X
-        ("DEY", vec![(Implied, 0x88, 1, 2, 0)]), //* DEY - Decrement Y
-        ("INX", vec![(Implied, 0xe8, 1, 2, 0)]), //* INX - Increment X
-        ("INY", vec![(Implied, 0xc8, 1, 2, 0)]), //* INY - Increment Y
+        ("dex", vec![(Implied, 0xca, 1, 2, 0)]), //* DEX - Decrement X
+        ("dey", vec![(Implied, 0x88, 1, 2, 0)]), //* DEY - Decrement Y
+        ("inx", vec![(Implied, 0xe8, 1, 2, 0)]), //* INX - Increment X
+        ("iny", vec![(Implied, 0xc8, 1, 2, 0)]), //* INY - Increment Y
 
 
         //* Stack Instructions
 
-        ("PHA", vec![(Implied, 0x48, 1, 3, 0)]), //* PHA - Push Accumulator
-        ("PHP", vec![(Implied, 0x08, 1, 3, 0)]), //* PHP - Push Processor Status
+        ("pha", vec![(Implied, 0x48, 1, 3, 0)]), //* PHA - Push Accumulator
+        ("php", vec![(Implied, 0x08, 1, 3, 0)]), //* PHP - Push Processor Status
 
-        ("PLA", vec![(Implied, 0x68, 1, 4, 0)]), //* PLA - Pull Accumulator
-        ("PLP", vec![(Implied, 0x28, 1, 4, 0)]), //* PLP - Pull Processor Status
+        ("pla", vec![(Implied, 0x68, 1, 4, 0)]), //* PLA - Pull Accumulator
+        ("plp", vec![(Implied, 0x28, 1, 4, 0)]), //* PLP - Pull Processor Status
 
-        ("TXS", vec![(Implied, 0x9a, 1, 2, 0)]), //* TXS - Transfer X to Stack Pointer
-        ("TSX", vec![(Implied, 0xba, 1, 2, 0)]), //* TSX - Transfer Stack Pointer to X
+        ("txs", vec![(Implied, 0x9a, 1, 2, 0)]), //* TXS - Transfer X to Stack Pointer
+        ("tsx", vec![(Implied, 0xba, 1, 2, 0)]), //* TSX - Transfer Stack Pointer to X
 
 
         //* Other Instructions
 
-        ("BRK", vec![(Implied, 0x00, 1, 7, 0)]),
-        ("NOP", vec![(Implied, 0xea, 1, 2, 0)]),
+        ("brk", vec![(Implied, 0x00, 1, 7, 0)]),
+        ("nop", vec![(Implied, 0xea, 1, 2, 0)]),
     ]
 });
 

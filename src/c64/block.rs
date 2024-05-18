@@ -1,8 +1,6 @@
 use std::fmt::Display;
 
-use crate::c64::cpu::{AddressingMode, MNEMONICS};
-
-use super::cpu::{decode, Instruction};
+use super::cpu::{decode, AddressingMode, Instruction, MNEMONICS};
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Block {
@@ -30,7 +28,7 @@ impl Block {
                 let byte = self.instructions[pos];
                 let mut ch = byte as char;
 
-                bytes += &format!("{byte:02X} ");
+                bytes += &format!("{byte:02x} ");
 
                 // Handle unprintable chars
                 if byte <= 0x20 || byte >= 0x7f {
@@ -43,7 +41,7 @@ impl Block {
                     bytes += "  ";
                 }
             }
-            result.push(format!("{addr:04X}   {bytes:56}{decoded}",));
+            result.push(format!("{addr:04x}   {bytes:56}{decoded}",));
         });
         result
     }
@@ -68,33 +66,33 @@ impl Block {
 
             let (bytes, decoded) = match length {
                 1 => {
-                    let bytes = format!("{code:02X}      ");
+                    let bytes = format!("{code:02x}      ");
                     let decoded = name.to_string();
                     (bytes, decoded)
                 }
                 2 => {
                     let lo = self.instructions[pos + 1];
-                    let bytes = format!("{code:02X} {lo:02X}   ");
+                    let bytes = format!("{code:02x} {lo:02x}   ");
                     let decoded = match mode {
-                        AddressingMode::Relative => format!("{name} ${:04X}", addr + lo as u16 + 2),
-                        _ => format!("{name} #${lo:02X}"),
+                        AddressingMode::Relative => format!("{name} ${:04x}", addr + lo as u16 + 2),
+                        _ => format!("{name} #${lo:02x}"),
                     };
                     (bytes, decoded)
                 }
                 3 => {
                     let lo = self.instructions[pos + 1];
                     let hi = self.instructions[pos + 2];
-                    let bytes = format!("{code:02X} {lo:02X} {hi:02X}");
+                    let bytes = format!("{code:02x} {lo:02x} {hi:02x}");
                     let decoded = match mode {
-                        AddressingMode::Indirect => format!("{name} (${hi:02X}{lo:02X})"),
-                        _ => format!("{name} ${hi:02X}{lo:02X}"),
+                        AddressingMode::Indirect => format!("{name} (${hi:02x}{lo:02x})"),
+                        _ => format!("{name} ${hi:02x}{lo:02x}"),
                     };
                     (bytes, decoded)
                 }
                 _ => panic!(),
             };
 
-            result.push(format!("{addr:04X}   {bytes}   {decoded}",));
+            result.push(format!("{addr:04x}   {bytes}   {decoded}",));
             pos += *length as usize;
         }
         result
@@ -161,7 +159,7 @@ impl Block {
                 println!("{instruction:16} -> {mnemonic} {params:8} - {mode:12?} -> {code:4x} {decoded:x?}");
 
                 instructions.push(*code);
-                if mnemonic == "BNE" {
+                if mnemonic == "bne" {
                     instructions.push(0x03);
                 } else {
                     instructions.append(&mut decoded);

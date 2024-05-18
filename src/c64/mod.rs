@@ -3,6 +3,7 @@
 pub mod block;
 pub mod bus;
 pub mod cpu;
+pub mod memory;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -10,27 +11,7 @@ use std::rc::Rc;
 use self::block::Block;
 use self::bus::Bus;
 use self::cpu::Cpu;
-
-#[derive(Debug)]
-pub(crate) struct Memory {
-    internal: [u8; 0xffff],
-}
-
-impl Memory {
-    pub fn new() -> Self {
-        Memory {
-            internal: [0x00; 0xffff],
-        }
-    }
-
-    pub fn read(&self, address: usize) -> u8 {
-        *self.internal.get(address).unwrap()
-    }
-
-    pub fn write(&mut self, address: usize, value: u8) {
-        self.internal[address] = value;
-    }
-}
+use self::memory::Memory;
 
 pub(crate) struct C64 {
     cpu: Cpu,
@@ -84,7 +65,7 @@ mod tests {
     #[test]
     fn should_disassemble_block() {
         let block = Block {
-            start: 0xFCE2,
+            start: 0xfce2,
             instructions: vec![
                 0xa2, 0xff,
                 0x78,
@@ -105,20 +86,20 @@ mod tests {
 
         // cspell: disable
         let expected: Vec<String> = vec![
-            "FCE2   A2 FF      LDX #$FF   ".trim().into(),
-            "FCE4   78         SEI        ".trim().into(),
-            "FCE5   9A         TXS        ".trim().into(),
-            "FCE6   D8         CLD        ".trim().into(),
-            "FCE7   20 02 FD   JSR $FD02  ".trim().into(),
-            "FCEA   D0 03      BNE $FCEF  ".trim().into(),
-            "FCEC   6C 00 80   JMP ($8000)".trim().into(),
-            "FCEF   8E 16 D0   STX $D016  ".trim().into(),
-            "FCF2   20 A3 FD   JSR $FDA3  ".trim().into(),
-            "FCF5   20 50 FD   JSR $FD50  ".trim().into(),
-            "FCF8   20 15 FD   JSR $FD15  ".trim().into(),
-            "FCFB   20 5B FF   JSR $FF5B  ".trim().into(),
-            "FCFE   58         CLI        ".trim().into(),
-            "FCFF   6C 00 A0   JMP ($A000)".trim().into(),
+            "fce2   a2 ff      ldx #$ff   ".trim().into(),
+            "fce4   78         sei        ".trim().into(),
+            "fce5   9a         txs        ".trim().into(),
+            "fce6   d8         cld        ".trim().into(),
+            "fce7   20 02 fd   jsr $fd02  ".trim().into(),
+            "fcea   d0 03      bne $fcef  ".trim().into(),
+            "fcec   6c 00 80   jmp ($8000)".trim().into(),
+            "fcef   8e 16 d0   stx $d016  ".trim().into(),
+            "fcf2   20 a3 fd   jsr $fda3  ".trim().into(),
+            "fcf5   20 50 fd   jsr $fd50  ".trim().into(),
+            "fcf8   20 15 fd   jsr $fd15  ".trim().into(),
+            "fcfb   20 5b ff   jsr $ff5b  ".trim().into(),
+            "fcfe   58         cli        ".trim().into(),
+            "fcff   6c 00 a0   jmp ($a000)".trim().into(),
         ];
 
         let result = block.disassemble();
@@ -135,23 +116,23 @@ mod tests {
         let block = Block::assemble(
             r"
             *= $fce2    ; start here
-            LDX #$FF
-            SEI
+            ldx #$ff
+            sei
 
-            TXS
-            CLD
+            txs
+            cld
             ; Try this
-            JSR $FD02
-            BNE $FCEF
-            JMP ($8000)
-            STX $D016
+            jsr $fd02
+            bne $fcef
+            jmp ($8000)
+            stx $d016
 ; And this
-            JSR $FDA3
-            JSR $FD50
-            JSR $FD15
-            JSR $FF5B
-            CLI
-            JMP ($A000)
+            jsr $fda3
+            jsr $fd50
+            jsr $fd15
+            jsr $ff5b
+            cli
+            jmp ($a000)
         ",
         );
 
@@ -192,7 +173,6 @@ mod tests {
         show(&block);
         let mut address = block.start as usize;
         for b in block.instructions.iter() {
-            // println!("writing {:02x} to {:04x}", b, address);
             c64.cpu.write(address, *b);
             address += 1;
         }
@@ -206,27 +186,24 @@ mod tests {
 
     #[test]
     fn should_be_able_to_modify_memory_directly() {
-        let memory = Rc::new(RefCell::new(Memory::new()));
-        let bus = Rc::new(RefCell::new(Bus::new(memory.clone())));
-        let cpu = Cpu::new(bus.clone());
+        let c64 = C64::new();
+        {
+            let mut mem = c64.memory.borrow_mut();
+            mem.write(0x1000, 0xca);
+            mem.write(0x1001, 0xfe);
+            mem.write(0x1002, 0xba);
+            mem.write(0x1003, 0xbe);
 
-        let c64 = C64 { memory, cpu, bus };
+            let byte1 = mem.read(0x1000);
+            let byte2 = mem.read(0x1001);
+            let byte3 = mem.read(0x1002);
+            let byte4 = mem.read(0x1003);
 
-        // let c64 = C64::new();
-        c64.memory.borrow_mut().write(0x1000, 0xca);
-        c64.memory.borrow_mut().write(0x1001, 0xfe);
-        c64.memory.borrow_mut().write(0x1002, 0xba);
-        c64.memory.borrow_mut().write(0x1003, 0xbe);
-
-        let byte1 = c64.memory.borrow().read(0x1000);
-        let byte2 = c64.memory.borrow().read(0x1001);
-        let byte3 = c64.memory.borrow().read(0x1002);
-        let byte4 = c64.memory.borrow().read(0x1003);
-
-        println!(
-            "MEM Read: {:02x} {:02x} {:02x} {:02x}",
-            byte1, byte2, byte3, byte4
-        );
+            println!(
+                "MEM Read: {:02x} {:02x} {:02x} {:02x}",
+                byte1, byte2, byte3, byte4
+            );
+        }
 
         let byte1 = c64.cpu.read(0x1000);
         let byte2 = c64.cpu.read(0x1001);
