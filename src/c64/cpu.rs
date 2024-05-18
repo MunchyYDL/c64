@@ -538,21 +538,18 @@ static INSTRUCTIONS: Lazy<HashMap<u8, Instruction>> = Lazy::new(|| {
     map
 });
 
-#[rustfmt::skip]
 pub(crate) static MNEMONICS: Lazy<HashMap<(&str, AddressingMode), u8>> = Lazy::new(|| {
-    use AddressingMode::*;
-    HashMap::from([
-        (("LDX", Immediate), 0xa2),
-        (("SEI", Implied),   0x78),
-        (("TXS", Implied),   0x9a),
-        (("CLD", Implied),   0xd8),
-        (("JSR", Absolute),  0x20),
-        (("BNE", Absolute),  0xd0),
-        (("CLI", Implied),   0x58),
-        (("STX", Absolute),  0x8e),
-        (("JMP", Indirect),  0x6c),
-        // (("LDA", Absolute), 0x00), (("LDA", Immediate), 0x00)
-    ])
+    let mut map = HashMap::new();
+
+    for x in ALL_INSTRUCTIONS.iter() {
+        let name = x.0;
+        for am in x.1.iter() {
+            let (mode, code, _, _, _): (AddressingMode, u8, u8, u8, u8) = *am;
+            map.insert((name, mode), code);
+        }
+    }
+
+    map
 });
 
 #[derive(Clone, Copy)]

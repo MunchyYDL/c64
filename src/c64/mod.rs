@@ -268,4 +268,22 @@ mod tests {
 
         assert_eq!(&block1, &block2);
     }
+
+    #[test]
+    fn should_execute_a_small_program() {
+        let c64 = C64::new();
+        let source = r"
+            *= $2000    ; start here
+            sei
+            ldx #$ff
+            cli
+            brk
+        ";
+        let prg = Block::assemble(source);
+
+        show(&prg);
+
+        c64.memory.borrow_mut().write_block(&prg);
+        // c64.run(0x2000);
+    }
 }
