@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 /*
   The 6510 microprocessor is a relatively simple 8 bit CPU with only a few internal
   registers capable of addressing at most 64kb of memory via it's 16 bit address bus.
@@ -28,6 +27,7 @@ use once_cell::sync::Lazy;
 use super::bus::Bus;
 
 #[derive(Debug)]
+#[allow(non_snake_case)]
 pub struct Cpu {
     /// Program Counter
     ///
@@ -127,11 +127,6 @@ impl Cpu {
     pub fn set_flag(&mut self, flag: StatusFlags) {
         self.SR |= flag as u8;
     }
-
-    // // Bus related
-    // pub fn connect_bus(&mut self, bus: Bus) {
-    //     self.bus = bus;
-    // }
 
     pub fn read(&self, address: u16) -> u8 {
         self.bus.borrow().read(address)
@@ -368,8 +363,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
 
         //* Math Instructions
         //* ADC - Add with Carry - Flags: NV-bdiZC
-        ("adc",
-        vec![
+        ("adc", vec![
             (Immediate, 0x69, 2, 2, 0),
             (ZeroPage,  0x65, 2, 3, 0),
             (ZeroPageX, 0x75, 2, 4, 0),
@@ -381,8 +375,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* SBC - Subtract with Carry - Flags: NV-bdiZC
-        ("sbc",
-        vec![
+        ("sbc", vec![
             (Immediate, 0xe9, 2, 2, 0),
             (ZeroPage,  0xe5, 2, 3, 0),
             (ZeroPageX, 0xf5, 2, 4, 0),
@@ -396,8 +389,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         //* Memory Instructions
 
         //* LDA - Load Accumulator - Flags: Nv-bdiZc
-        ("lda",
-        vec![
+        ("lda", vec![
             (Immediate, 0xa9, 2, 2, 0),
             (ZeroPage,  0xa5, 2, 3, 0),
             (ZeroPageX, 0xb5, 2, 4, 0),
@@ -409,8 +401,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* STA - Store Accumulator
-        ("sta",
-        vec![
+        ("sta", vec![
             (ZeroPage,  0x85, 2, 3, 0),
             (ZeroPageX, 0x95, 2, 4, 0),
             (Absolute,  0x8d, 3, 4, 0),
@@ -421,8 +412,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* LDX - Load X Register - Flags: Nv-bdiZc
-        ("ldx",
-        vec![
+        ("ldx", vec![
             (Immediate, 0xa2, 2, 2, 0),
             (ZeroPage,  0xa6, 2, 3, 0),
             (ZeroPageY, 0xb6, 2, 4, 0),
@@ -431,8 +421,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* STX - Store X Register
-        ("stx",
-        vec![
+        ("stx", vec![
             (ZeroPage,  0x86, 2, 3, 0),
             (ZeroPageY, 0x96, 2, 4, 0),
             (Absolute,  0x8e, 3, 4, 0),
@@ -440,8 +429,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
 
 
         //* LDY - Load Y Register - Flags: Nv-bdiZc
-        ("ldy",
-        vec![
+        ("ldy", vec![
             (Immediate, 0xa0, 2, 2, 0),
             (ZeroPage,  0xa4, 2, 3, 0),
             (ZeroPageX, 0xb4, 2, 4, 0),
@@ -450,16 +438,14 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* STY - Store Y Register
-        ("sty",
-        vec![
+        ("sty", vec![
             (ZeroPage,  0x84, 2, 3, 0),
             (ZeroPageX, 0x94, 2, 4, 0),
             (Absolute,  0x8c, 3, 4, 0),
         ]),
 
         //* DEC - Decrement Memory - Flags: Nv-bdiZc
-        ("dec",
-        vec![
+        ("dec", vec![
             (ZeroPage,  0xc6, 2, 5, 0),
             (ZeroPageX, 0xd6, 2, 6, 0),
             (Absolute,  0xce, 3, 6, 0),
@@ -467,8 +453,7 @@ static ALL_INSTRUCTIONS: Lazy<Vec<Inst<'static>>> = Lazy::new(|| {
         ]),
 
         //* INC - Increment Memory - Flags: Nv-bdiZc
-        ("inc",
-        vec![
+        ("inc", vec![
             (ZeroPage,  0xe6, 2, 5, 0),
             (ZeroPageX, 0xf6, 2, 6, 0),
             (Absolute,  0xee, 3, 6, 0),
