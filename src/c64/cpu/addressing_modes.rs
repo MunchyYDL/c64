@@ -1,3 +1,5 @@
+use super::Cpu;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum AddressingMode {
     Accumulator,
@@ -13,4 +15,10 @@ pub enum AddressingMode {
     ZeroPage,
     ZeroPageX,
     ZeroPageY,
+}
+
+impl Cpu {
+    pub fn adr_immediate(&mut self) -> u8 {
+        self.fetch()
+    }
 }

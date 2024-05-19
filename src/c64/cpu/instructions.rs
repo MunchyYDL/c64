@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use once_cell::sync::Lazy;
 
 use super::addressing_modes::AddressingMode;
 
+#[derive(Debug)]
 pub(crate) struct Instruction {
     pub code: u8,
     pub mode: AddressingMode,
@@ -31,6 +32,16 @@ impl Instruction {
 
     pub fn unknown(code: u8) -> Self {
         Instruction::new(code, AddressingMode::Implied, "???", 1, 0)
+    }
+}
+
+impl Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} ({:02x}) {:?} ({},{})",
+            self.name, self.code, self.mode, self.length, self.cycles
+        )
     }
 }
 

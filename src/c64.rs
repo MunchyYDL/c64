@@ -270,11 +270,14 @@ mod tests {
 
     #[test]
     fn should_execute_a_small_program() {
-        let c64 = C64::new();
+        let mut c64 = C64::new();
         let source = r"
             *= $2000    ; start here
             sei
-            ldx #$ff
+            ldx $2000
+            ldx #$03
+            stx $2000
+            lda $2000
             cli
             brk
         ";
@@ -283,6 +286,13 @@ mod tests {
         show(&prg);
 
         c64.memory.borrow_mut().write_block(&prg);
-        // c64.run(0x2000);
+        c64.cpu.PC = 0x2000;
+
+        println!("CPU - {}\n", c64.cpu);
+
+        for x in 0..6 {
+            c64.cpu.step();
+            println!("CPU - {}\n", c64.cpu);
+        }
     }
 }
