@@ -169,8 +169,11 @@ impl Cpu {
         };
 
         match (op.name, op.code) {
+            ("ora", _) => self.op_ora(value),
+
             ("sei", _) => self.op_sei(),
             ("cli", _) => self.op_cli(),
+
             ("lda", _) => self.op_lda(value),
             ("ldx", _) => self.op_ldx(value),
             ("ldy", _) => self.op_ldy(value),

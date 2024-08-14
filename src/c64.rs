@@ -4,6 +4,7 @@ pub mod block;
 pub mod bus;
 pub mod cpu;
 pub mod memory;
+pub mod vic_ii;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -273,13 +274,8 @@ mod tests {
         let mut c64 = C64::new();
         let source = r"
             *= $2000    ; start here
-            sei
-            ldx $2000
-            ldx #$03
-            stx $2000
-            lda $2000
-            cli
-            brk
+            lda #$03
+            ora #$0f
         ";
         let prg = Block::assemble(source);
 
@@ -290,7 +286,7 @@ mod tests {
 
         println!("CPU - {}\n", c64.cpu);
 
-        for x in 0..6 {
+        for x in 0..2 {
             c64.cpu.step();
             println!("CPU - {}\n", c64.cpu);
         }

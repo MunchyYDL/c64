@@ -12,8 +12,8 @@ fn main() -> io::Result<()> {
 }
 
 fn program() -> io::Result<()> {
-    // let data: Vec<u8> = fs::read("./files/prg/0 and X (1987)(Wicked Software).prg")?;
-    let data: Vec<u8> = fs::read("./files/prg/1001 Cracking Crew #06 (19xx)(1001 Crew).prg")?;
+    // let data: Vec<u8> = fs::read("./assets/prg/0 and X (1987)(Wicked Software).prg")?;
+    let data: Vec<u8> = fs::read("./assets/prg/1001 Cracking Crew #06 (19xx)(1001 Crew).prg")?;
     let block = Block::from_prg(data);
     show(&block);
     Ok(())

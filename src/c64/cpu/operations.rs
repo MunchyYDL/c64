@@ -4,7 +4,11 @@ use super::{Cpu, StatusFlags};
 
 //* Bitwise Operations
 impl Cpu {
-    fn op_and(&mut self, value: &u8) {}
+    fn op_and(&mut self, value: u8) {}
+
+    pub fn op_ora(&mut self, value: u8) {
+        self.A &= value;
+    }
 }
 
 //* Flag Operations */
